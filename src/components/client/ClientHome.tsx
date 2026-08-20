@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useSalon } from '../../context/SalonContext';
 import { Procedure, GalleryWork, ProcedureCategory } from '../../types';
 import { formatCurrency, formatTimeFriendly, getDayOfWeekName } from '../../utils/dateUtils';
@@ -67,32 +66,19 @@ const GalleryCardSlide: React.FC<{
   };
 
   return (
-    <motion.div
+    <div
       id={`gallery-item-${work.id}`}
-      layout
-      initial={{ opacity: 0, scale: 0.9, y: 15 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: -10 }}
-      transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      className="group relative bg-[#F5F2ED] rounded-2xl sm:rounded-3xl overflow-hidden aspect-square border border-[#EAE4DD] shadow-xs hover:border-[#D48D80] transition-all flex flex-col justify-end select-none"
+      className="group relative bg-[#F5F2ED] rounded-2xl sm:rounded-3xl overflow-hidden aspect-square border border-[#EAE4DD] shadow-xs hover:border-[#D48D80] flex flex-col justify-end select-none"
     >
       {/* Background Image of current slide */}
       <div className="absolute inset-0 cursor-pointer" onClick={() => onOpenZoom(work)}>
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={slideIndex}
-            src={photos[slideIndex] || work.photo}
-            alt={`${work.title} - foto ${slideIndex + 1}`}
-            referrerPolicy="no-referrer"
-            initial={{ opacity: 0.4 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0.4 }}
-            transition={{ duration: 0.25 }}
-            className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500"
-          />
-        </AnimatePresence>
+        <img
+          key={slideIndex}
+          src={photos[slideIndex] || work.photo}
+          alt={`${work.title} - foto ${slideIndex + 1}`}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
       </div>
 
       {/* Carousel Navigation Arrows if multiple photos */}
@@ -101,7 +87,7 @@ const GalleryCardSlide: React.FC<{
           <button
             type="button"
             onClick={handlePrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md active:scale-95"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md"
             title="Foto anterior"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -109,7 +95,7 @@ const GalleryCardSlide: React.FC<{
           <button
             type="button"
             onClick={handleNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md active:scale-95"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-colors opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md"
             title="Próxima foto"
           >
             <ChevronRight className="w-4 h-4" />
@@ -120,7 +106,7 @@ const GalleryCardSlide: React.FC<{
             {photos.map((_, idx) => (
               <span
                 key={idx}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full ${
                   slideIndex === idx ? 'w-4 bg-white shadow-xs' : 'w-1.5 bg-white/50'
                 }`}
               />
@@ -163,7 +149,7 @@ const GalleryCardSlide: React.FC<{
           <span className="truncate">Toque para ampliar</span>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -252,7 +238,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
               <button
                 id="hero-book-cta-btn"
                 onClick={() => onOpenBookingWithProcedure()}
-                className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white bg-[#8E5D52] hover:bg-[#784D43] active:scale-98 rounded-2xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 sm:py-4 text-xs sm:text-sm font-bold text-white bg-[#8E5D52] hover:bg-[#784D43] rounded-2xl shadow-xs transition-colors cursor-pointer whitespace-nowrap"
               >
                 <Calendar className="w-4 h-4 shrink-0" />
                 <span>AGENDAR HORÁRIO ONLINE</span>
@@ -318,7 +304,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                 className="flex items-center gap-1.5 min-w-0 flex-1 hover:text-[#8E5D52] transition-colors group"
                 title="Ver endereço no Google Maps"
               >
-                <MapPin className="w-3.5 h-3.5 text-[#8E5D52] shrink-0 group-hover:scale-110 transition-transform" />
+                <MapPin className="w-3.5 h-3.5 text-[#8E5D52] shrink-0" />
                 <span className="truncate font-medium">{config.address.split(',')[0]}</span>
               </a>
               <span className="text-emerald-700 text-[11px] font-bold bg-[#EAF5EC] px-2.5 py-1 rounded-full border border-[#C2E4C9] shrink-0 whitespace-nowrap">
@@ -345,124 +331,108 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             </div>
           </div>
 
-          {/* Interactive Category Filter Chips for Procedures */}
+          {/* Category Filter Chips for Procedures */}
           <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none">
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.value;
               const count = procCounts[cat.value] || 0;
 
               return (
-                <motion.button
+                <button
                   key={`proc-cat-${cat.value}`}
                   onClick={() => setSelectedCategory(cat.value)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
                   className={`relative px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-semibold shrink-0 transition-colors flex items-center gap-1.5 cursor-pointer select-none ${
                     isSelected
-                      ? 'text-white'
+                      ? 'bg-[#8E5D52] text-white shadow-xs'
                       : 'text-[#59524C] hover:text-[#2D2926] bg-white border border-[#EAE4DD] hover:bg-[#F5F2ED]'
                   }`}
                 >
-                  {isSelected && (
-                    <motion.div
-                      layoutId="activeProcCategoryPill"
-                      className="absolute inset-0 bg-[#8E5D52] rounded-2xl shadow-xs"
-                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 text-sm">{cat.icon}</span>
-                  <span className="relative z-10">{cat.label}</span>
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                   <span
-                    className={`relative z-10 text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                       isSelected ? 'bg-white/20 text-white' : 'bg-[#F5F2ED] text-[#7D756D]'
                     }`}
                   >
                     {count}
                   </span>
-                </motion.button>
+                </button>
               );
             })}
           </div>
 
-          {/* Procedures Grid with Animated Transitions */}
-          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            <AnimatePresence mode="popLayout">
-              {filteredProcedures.map((proc) => (
-                <motion.div
-                  key={proc.id}
-                  id={`proc-card-${proc.id}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0.92, y: 15 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, y: -10 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                  className="bg-white rounded-3xl border border-[#EAE4DD] overflow-hidden shadow-xs hover:border-[#D48D80] transition-all flex flex-col group"
+          {/* Procedures Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            {filteredProcedures.map((proc) => (
+              <div
+                key={proc.id}
+                id={`proc-card-${proc.id}`}
+                className="bg-white rounded-3xl border border-[#EAE4DD] overflow-hidden shadow-xs hover:border-[#D48D80] transition-colors flex flex-col group"
+              >
+                {/* Photo container */}
+                <div
+                  className="relative h-44 sm:h-48 w-full bg-[#F5F2ED] overflow-hidden cursor-pointer"
+                  onClick={() => onOpenProcedureDetails(proc)}
                 >
-                  {/* Photo container */}
-                  <div
-                    className="relative h-44 sm:h-48 w-full bg-[#F5F2ED] overflow-hidden cursor-pointer"
-                    onClick={() => onOpenProcedureDetails(proc)}
-                  >
-                    <img
-                      src={proc.photo}
-                      alt={proc.name}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-[#8E5D52] text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full shadow-xs border border-[#EAE4DD] truncate max-w-[150px]">
-                      {proc.category}
-                    </div>
-                    <div className="absolute bottom-3 right-3 bg-[#2D2926]/85 backdrop-blur-xs text-white text-xs font-medium px-2.5 py-1 rounded-xl flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#D48D80] shrink-0" />
-                      <span>{formatTimeFriendly(proc.durationMinutes)}</span>
-                    </div>
+                  <img
+                    src={proc.photo}
+                    alt={proc.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs text-[#8E5D52] text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full shadow-xs border border-[#EAE4DD] truncate max-w-[150px]">
+                    {proc.category}
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-[#2D2926]/85 backdrop-blur-xs text-white text-xs font-medium px-2.5 py-1 rounded-xl flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#D48D80] shrink-0" />
+                    <span>{formatTimeFriendly(proc.durationMinutes)}</span>
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                  <div className="min-w-0">
+                    <h3
+                      className="font-bold text-[#2D2926] text-sm sm:text-base leading-snug cursor-pointer hover:text-[#8E5D52] transition-colors break-words line-clamp-2"
+                      onClick={() => onOpenProcedureDetails(proc)}
+                    >
+                      {proc.name}
+                    </h3>
+                    <p className="text-xs text-[#7D756D] line-clamp-2 mt-1.5 leading-relaxed break-words">
+                      {proc.description}
+                    </p>
                   </div>
 
-                  {/* Body Content */}
-                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                  <div className="pt-3 border-t border-[#F0EAE4] flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <h3
-                        className="font-bold text-[#2D2926] text-sm sm:text-base leading-snug cursor-pointer hover:text-[#8E5D52] transition-colors break-words line-clamp-2"
-                        onClick={() => onOpenProcedureDetails(proc)}
-                      >
-                        {proc.name}
-                      </h3>
-                      <p className="text-xs text-[#7D756D] line-clamp-2 mt-1.5 leading-relaxed break-words">
-                        {proc.description}
-                      </p>
+                      <span className="text-[10px] sm:text-[11px] text-[#7D756D] block">Valor</span>
+                      <span className="text-base sm:text-lg font-extrabold text-[#2D2926] truncate block">
+                        {formatCurrency(proc.price)}
+                      </span>
                     </div>
 
-                    <div className="pt-3 border-t border-[#F0EAE4] flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <span className="text-[10px] sm:text-[11px] text-[#7D756D] block">Valor</span>
-                        <span className="text-base sm:text-lg font-extrabold text-[#2D2926] truncate block">
-                          {formatCurrency(proc.price)}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <button
+                        onClick={() => onOpenProcedureDetails(proc)}
+                        className="p-2 text-[#7D756D] hover:text-[#2D2926] hover:bg-[#F5F2ED] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                        title="Ver detalhes"
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
 
-                      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        <button
-                          onClick={() => onOpenProcedureDetails(proc)}
-                          className="p-2 text-[#7D756D] hover:text-[#2D2926] hover:bg-[#F5F2ED] rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                          title="Ver detalhes"
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          onClick={() => onOpenBookingWithProcedure(proc)}
-                          className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#8E5D52] hover:bg-[#784D43] active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap"
-                        >
-                          <span>Agendar</span>
-                          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => onOpenBookingWithProcedure(proc)}
+                        className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#8E5D52] hover:bg-[#784D43] text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                      >
+                        <span>Agendar</span>
+                        <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                      </button>
                     </div>
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {filteredProcedures.length === 0 && (
             <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-[#EAE4DD]">
@@ -471,7 +441,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
           )}
         </section>
 
-        {/* Galeria de Trabalhos / Portfólio Section with Interactive Slide and Animated Category Filter Chips */}
+        {/* Galeria de Trabalhos / Portfólio Section */}
         <section id="galeria-section" className="space-y-5 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5 border-b border-[#EAE4DD] pb-3.5">
             <div>
@@ -485,76 +455,58 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             </div>
           </div>
 
-          {/* Interactive Category Filter Chips for Gallery */}
+          {/* Category Filter Chips for Gallery */}
           <div className="-mx-4 px-4 sm:mx-0 sm:px-0 flex items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-none">
             {CATEGORIES.map((cat) => {
               const isSelected = galleryCategory === cat.value;
               const count = galleryCounts[cat.value] || 0;
 
               return (
-                <motion.button
+                <button
                   key={`gal-filter-chip-${cat.value}`}
                   id={`gallery-filter-${cat.value.toLowerCase()}`}
                   onClick={() => setGalleryCategory(cat.value)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
                   className={`relative px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-semibold shrink-0 transition-colors flex items-center gap-1.5 cursor-pointer select-none ${
                     isSelected
-                      ? 'text-white'
+                      ? 'bg-[#2D2926] text-white shadow-xs'
                       : 'text-[#59524C] hover:text-[#2D2926] bg-white border border-[#EAE4DD] hover:bg-[#F5F2ED]'
                   }`}
                 >
-                  {isSelected && (
-                    <motion.div
-                      layoutId="activeGalleryCategoryPill"
-                      className="absolute inset-0 bg-[#2D2926] rounded-2xl shadow-xs"
-                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 text-sm">{cat.icon}</span>
-                  <span className="relative z-10">{cat.label}</span>
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                   <span
-                    className={`relative z-10 text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                       isSelected ? 'bg-white/20 text-white' : 'bg-[#F5F2ED] text-[#7D756D]'
                     }`}
                   >
                     {count}
                   </span>
-                </motion.button>
+                </button>
               );
             })}
           </div>
 
-          {/* Gallery Grid with Interactive Multi-Photo Card Slides */}
-          <motion.div
-            layout
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4.5"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredGallery.map((work) => (
-                <GalleryCardSlide
-                  key={work.id}
-                  work={work}
-                  onOpenZoom={onOpenGalleryZoom}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          {/* Gallery Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4.5">
+            {filteredGallery.map((work) => (
+              <GalleryCardSlide
+                key={work.id}
+                work={work}
+                onOpenZoom={onOpenGalleryZoom}
+              />
+            ))}
+          </div>
 
           {filteredGallery.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-12 bg-white rounded-3xl border border-dashed border-[#EAE4DD] space-y-2"
-            >
+            <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-[#EAE4DD] space-y-2">
               <ImageIcon className="w-8 h-8 text-[#A8A099] mx-auto" />
               <p className="text-[#2D2926] font-bold text-sm">Nenhuma foto encontrada</p>
               <p className="text-[#7D756D] text-xs">Não há fotos cadastradas nesta categoria no momento.</p>
-            </motion.div>
+            </div>
           )}
         </section>
 
-        {/* Sobre & Localização Section (with direct Google Maps and Instagram links) */}
+        {/* Sobre & Localização Section */}
         <section id="sobre-section" className="bg-white rounded-3xl border border-[#EAE4DD] p-5 sm:p-8 lg:p-9 shadow-xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Bio & Owner */}
@@ -686,7 +638,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
 
           <button
             onClick={() => onOpenBookingWithProcedure()}
-            className="flex-2 py-3 px-3 bg-[#8E5D52] hover:bg-[#784D43] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs active:scale-98 cursor-pointer truncate"
+            className="flex-2 py-3 px-3 bg-[#8E5D52] hover:bg-[#784D43] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer truncate"
           >
             <Calendar className="w-4 h-4 shrink-0" />
             <span className="truncate">AGENDAR HORÁRIO</span>

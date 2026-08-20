@@ -9,7 +9,6 @@ import {
   addMinutesToTime,
 } from '../../utils/dateUtils';
 import { formatPhoneMask, cleanPhone, buildClientConfirmationShareUrl } from '../../utils/whatsappUtils';
-import confetti from 'canvas-confetti';
 import {
   X,
   ChevronLeft,
@@ -225,18 +224,6 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
 
     setConfirmedAppointment(res.appointment || null);
     setStep(6);
-
-    // Trigger celebratory confetti
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#f43f5e', '#ec4899', '#fb7185', '#fda4af', '#fbbf24'],
-      });
-    } catch {
-      // ignore
-    }
   };
 
   const activeProcedures = procedures.filter((p) => p.active);
