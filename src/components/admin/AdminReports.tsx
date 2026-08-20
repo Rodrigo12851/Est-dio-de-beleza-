@@ -38,12 +38,24 @@ export const AdminReports: React.FC = () => {
 
     appointments.forEach((a) => {
       if (a.status !== 'cancelado') {
-        if (!map[a.procedureName]) {
-          map[a.procedureName] = { name: a.procedureName, count: 0, revenue: 0, category: 'Outros' };
-        }
-        map[a.procedureName].count += 1;
-        if (a.status === 'concluido' || a.isPaid) {
-          map[a.procedureName].revenue += a.finalPrice || a.price;
+        if (a.procedures && a.procedures.length > 0) {
+          a.procedures.forEach((pItem) => {
+            if (!map[pItem.name]) {
+              map[pItem.name] = { name: pItem.name, count: 0, revenue: 0, category: pItem.category || 'Outros' };
+            }
+            map[pItem.name].count += 1;
+            if (a.status === 'concluido' || a.isPaid) {
+              map[pItem.name].revenue += pItem.price || 0;
+            }
+          });
+        } else {
+          if (!map[a.procedureName]) {
+            map[a.procedureName] = { name: a.procedureName, count: 0, revenue: 0, category: a.procedureCategory || 'Outros' };
+          }
+          map[a.procedureName].count += 1;
+          if (a.status === 'concluido' || a.isPaid) {
+            map[a.procedureName].revenue += a.finalPrice || a.price;
+          }
         }
       }
     });

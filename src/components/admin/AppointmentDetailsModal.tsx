@@ -221,19 +221,41 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
             </div>
 
             {!isEditingTime ? (
-              <div className="p-4 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-[#7D756D]">Procedimento:</span>
-                  <span className="font-bold text-[#2D2926]">{appointment.procedureName}</span>
+              <div className="p-4 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] space-y-2.5 text-xs">
+                <div>
+                  <span className="text-[#7D756D] block mb-1">
+                    {appointment.procedures && appointment.procedures.length > 1
+                      ? `Procedimentos Selecionados (${appointment.procedures.length}):`
+                      : 'Procedimento:'}
+                  </span>
+                  {appointment.procedures && appointment.procedures.length > 1 ? (
+                    <div className="space-y-1.5 pl-1">
+                      {appointment.procedures.map((p, idx) => (
+                        <div key={p.id || idx} className="flex justify-between items-center bg-white p-2 rounded-xl border border-[#EAE4DD]">
+                          <span className="font-bold text-[#2D2926]">
+                            {p.name}{' '}
+                            <span className="text-[#7D756D] font-normal text-[11px]">
+                              ({formatTimeFriendly(p.durationMinutes)})
+                            </span>
+                          </span>
+                          <span className="font-semibold text-[#8E5D52]">
+                            {formatCurrency(p.price)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="font-bold text-[#2D2926] text-sm">{appointment.procedureName}</span>
+                  )}
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between pt-1 border-t border-[#F0EAE4]">
                   <span className="text-[#7D756D]">Data:</span>
                   <span className="font-bold text-[#2D2926]">
                     {formatDateBR(appointment.date)} ({getRelativeDayLabel(appointment.date)})
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#7D756D]">Horário:</span>
+                  <span className="text-[#7D756D]">Horário Contínuo:</span>
                   <span className="font-bold text-[#2D2926]">
                     {appointment.time} até {endTime} ({formatTimeFriendly(appointment.durationMinutes)})
                   </span>

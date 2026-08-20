@@ -1,30 +1,30 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSalon } from '../../context/SalonContext';
-import { Procedure, ProcedureCategory, Appointment } from '../../types';
+import { Procedure, ProcedureCategory, Appointment, AppointmentProcedureItem } from '../../types';
 import {
   formatCurrency,
   formatTimeFriendly,
   formatDateBR,
-  getTodayDateStr,
-  getTomorrowDateStr,
   getRelativeDayLabel,
+  addMinutesToTime,
 } from '../../utils/dateUtils';
 import { formatPhoneMask, cleanPhone, buildClientConfirmationShareUrl } from '../../utils/whatsappUtils';
 import confetti from 'canvas-confetti';
 import {
   X,
   ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
   Clock,
   User,
   Phone,
   FileText,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   MessageCircle,
-  Scissors
+  Plus,
+  Check,
+  Sparkles,
+  Layers,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 
 interface BookingFlowModalProps {
@@ -50,7 +50,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
 
   const [step, setStep] = useState<Step>(1);
   const [selectedCategory, setSelectedCategory] = useState<ProcedureCategory | 'Todos'>('Todos');
-  const [selectedProcedure, setSelectedProcedure] = useState<Procedure | null>(null);
+  const [selectedProcedures, setSelectedProcedures] = useState<Procedure[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
@@ -63,15 +63,45 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (preselectedProcedure) {
-        setSelectedProcedure(preselectedProcedure);
-        setStep(2); // Jump directly to date selection
+        setSelectedProcedures([preselectedProcedure]);
+        setStep(1); // Allow user to see selection or add more procedures, or proceed directly
       } else {
+        setSelectedProcedures([]);
         setStep(1);
       }
+      setSelectedDate('');
+      setSelectedTime('');
       setErrorMessage('');
       setConfirmedAppointment(null);
     }
   }, [isOpen, preselectedProcedure]);
+
+  // Derived calculations for multiple procedures
+  const totalDurationMinutes = useMemo(() => {
+    return selectedProcedures.reduce((acc, p) => acc + (p.durationMinutes || 0), 0);
+  }, [selectedProcedures]);
+
+  const totalPrice = useMemo(() => {
+    return selectedProcedures.reduce((acc, p) => acc + (p.price || 0), 0);
+  }, [selectedProcedures]);
+
+  const proceduresTitle = useMemo(() => {
+    if (selectedProcedures.length === 0) return '';
+    return selectedProcedures.map((p) => p.name).join(' + ');
+  }, [selectedProcedures]);
+
+  // Toggle procedure selection
+  const handleToggleProcedure = (proc: Procedure) => {
+    setErrorMessage('');
+    setSelectedProcedures((prev) => {
+      const exists = prev.some((p) => p.id === proc.id);
+      if (exists) {
+        return prev.filter((p) => p.id !== proc.id);
+      } else {
+        return [...prev, proc];
+      }
+    });
+  };
 
   // Generate next 21 calendar days for selection
   const upcomingDays = useMemo(() => {
@@ -94,13 +124,13 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
       days.push({ dateStr, dayNum, weekDay, available, label });
     }
     return days;
-  }, [config, isDateAvailable]);
+  }, [isDateAvailable]);
 
-  // Compute available time slots whenever date or procedure changes
+  // Compute available time slots considering total combined duration
   const availableSlots = useMemo(() => {
-    if (!selectedDate || !selectedProcedure) return [];
-    return getAvailableSlotsForDate(selectedDate, selectedProcedure.durationMinutes);
-  }, [selectedDate, selectedProcedure, getAvailableSlotsForDate]);
+    if (!selectedDate || totalDurationMinutes <= 0) return [];
+    return getAvailableSlotsForDate(selectedDate, totalDurationMinutes);
+  }, [selectedDate, totalDurationMinutes, getAvailableSlotsForDate]);
 
   // Group slots into Morning (before 12h), Afternoon (12h-17h), Evening (17h+)
   const groupedSlots = useMemo(() => {
@@ -120,8 +150,11 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSelectProcedure = (proc: Procedure) => {
-    setSelectedProcedure(proc);
+  const handleProceedToDate = () => {
+    if (selectedProcedures.length === 0) {
+      setErrorMessage('Por favor, selecione ao menos um procedimento.');
+      return;
+    }
     setErrorMessage('');
     setStep(2);
   };
@@ -155,19 +188,30 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   };
 
   const handleConfirmBooking = () => {
-    if (!selectedProcedure || !selectedDate || !selectedTime) return;
+    if (selectedProcedures.length === 0 || !selectedDate || !selectedTime) return;
+
+    const procedureItems: AppointmentProcedureItem[] = selectedProcedures.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      durationMinutes: p.durationMinutes,
+      photo: p.photo,
+    }));
 
     const res = createAppointment({
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientNotes: clientNotes.trim(),
-      procedureId: selectedProcedure.id,
-      procedureName: selectedProcedure.name,
-      procedureCategory: selectedProcedure.category,
+      procedureId: selectedProcedures[0].id,
+      procedureName: proceduresTitle,
+      procedureCategory: selectedProcedures[0].category,
+      procedureIds: selectedProcedures.map((p) => p.id),
+      procedures: procedureItems,
       date: selectedDate,
       time: selectedTime,
-      durationMinutes: selectedProcedure.durationMinutes,
-      price: selectedProcedure.price,
+      durationMinutes: totalDurationMinutes,
+      price: totalPrice,
       discount: 0,
       status: 'pendente',
       isPaid: false,
@@ -196,9 +240,10 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
   };
 
   const activeProcedures = procedures.filter((p) => p.active);
-  const filteredProcedures = selectedCategory === 'Todos'
-    ? activeProcedures
-    : activeProcedures.filter((p) => p.category === selectedCategory);
+  const filteredProcedures =
+    selectedCategory === 'Todos'
+      ? activeProcedures
+      : activeProcedures.filter((p) => p.category === selectedCategory);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
@@ -217,7 +262,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
             )}
             <div>
               <h2 className="font-['Playfair_Display',serif] font-bold text-lg text-[#2D2926] leading-tight">
-                {step === 1 && '1. Escolha o Procedimento'}
+                {step === 1 && '1. Escolha os Procedimentos'}
                 {step === 2 && '2. Escolha a Data'}
                 {step === 3 && '3. Escolha o Horário'}
                 {step === 4 && '4. Seus Dados'}
@@ -250,9 +295,16 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
             </div>
           )}
 
-          {/* STEP 1: Select Procedure */}
+          {/* STEP 1: Select One or Multiple Procedures */}
           {step === 1 && (
             <div className="space-y-4">
+              <div className="p-3.5 bg-[#F9F5F2] rounded-2xl border border-[#EAE4DD] text-xs text-[#59524C] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-[#8E5D52] shrink-0" />
+                  <span>Você pode selecionar <strong>um ou mais serviços</strong> para o mesmo atendimento.</span>
+                </div>
+              </div>
+
               {/* Category pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {(['Todos', 'Cabelo', 'Maquiagem', 'Unhas', 'Sobrancelhas'] as const).map((cat) => (
@@ -270,68 +322,151 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                 ))}
               </div>
 
-              {/* Procedure list */}
+              {/* Procedure multi-select list */}
               <div className="space-y-2.5">
-                {filteredProcedures.map((proc) => (
-                  <div
-                    key={proc.id}
-                    id={`select-proc-${proc.id}`}
-                    onClick={() => handleSelectProcedure(proc)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 hover:border-[#8E5D52] hover:bg-[#FDFBF9] ${
-                      selectedProcedure?.id === proc.id
-                        ? 'border-[#8E5D52] bg-[#FDFBF9] ring-2 ring-[#8E5D52]/20'
-                        : 'border-[#EAE4DD] bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={proc.photo}
-                        alt={proc.name}
-                        referrerPolicy="no-referrer"
-                        className="w-13 h-13 rounded-xl object-cover shrink-0 border border-[#EAE4DD]"
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E5D52]">
-                          {proc.category}
-                        </span>
-                        <h4 className="font-bold text-[#2D2926] text-sm truncate">
-                          {proc.name}
-                        </h4>
-                        <div className="flex items-center gap-2 text-xs text-[#7D756D] mt-0.5">
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="w-3 h-3" />
-                            {formatTimeFriendly(proc.durationMinutes)}
+                {filteredProcedures.map((proc) => {
+                  const isSelected = selectedProcedures.some((p) => p.id === proc.id);
+                  return (
+                    <div
+                      key={proc.id}
+                      id={`select-proc-${proc.id}`}
+                      onClick={() => handleToggleProcedure(proc)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 hover:border-[#8E5D52] ${
+                        isSelected
+                          ? 'border-[#8E5D52] bg-[#FDFBF9] ring-2 ring-[#8E5D52]/20 shadow-xs'
+                          : 'border-[#EAE4DD] bg-white hover:bg-[#FDFBF9]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Checkbox indicator */}
+                        <div
+                          className={`w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 transition-all ${
+                            isSelected
+                              ? 'bg-[#8E5D52] border-[#8E5D52] text-white'
+                              : 'border-[#A8A099] bg-white'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+
+                        <img
+                          src={proc.photo}
+                          alt={proc.name}
+                          referrerPolicy="no-referrer"
+                          className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#EAE4DD]"
+                        />
+
+                        <div className="min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E5D52]">
+                            {proc.category}
                           </span>
+                          <h4 className="font-bold text-[#2D2926] text-sm truncate">
+                            {proc.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-[#7D756D] mt-0.5">
+                            <span className="flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" />
+                              {formatTimeFriendly(proc.durationMinutes)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="text-sm font-extrabold text-[#2D2926] block">
-                        {formatCurrency(proc.price)}
-                      </span>
-                      <span className="text-[11px] font-bold text-[#8E5D52]">
-                        Escolher &rarr;
-                      </span>
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-extrabold text-[#2D2926] block">
+                          {formatCurrency(proc.price)}
+                        </span>
+                        <span
+                          className={`text-[11px] font-bold ${
+                            isSelected ? 'text-[#8E5D52]' : 'text-[#7D756D]'
+                          }`}
+                        >
+                          {isSelected ? '✓ Selecionado' : '+ Adicionar'}
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* Selected Summary Sticky Footer in Step 1 */}
+              <div className="pt-2 border-t border-[#EAE4DD] space-y-3">
+                <div className="bg-[#FDFBF9] p-3.5 rounded-2xl border border-[#EAE4DD] flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[#7D756D] block">
+                      {selectedProcedures.length === 0
+                        ? 'Nenhum procedimento selecionado'
+                        : `${selectedProcedures.length} ${
+                            selectedProcedures.length === 1
+                              ? 'serviço selecionado'
+                              : 'serviços selecionados'
+                          }`}
+                    </span>
+                    <span className="font-bold text-[#2D2926]">
+                      {selectedProcedures.length > 0
+                        ? `Duração total: ${formatTimeFriendly(totalDurationMinutes)}`
+                        : 'Clique nos serviços acima para escolher'}
+                    </span>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <span className="text-[#7D756D] block">Total:</span>
+                    <span className="font-extrabold text-[#8E5D52] text-sm">
+                      {formatCurrency(totalPrice)}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  id="booking-proceed-date-btn"
+                  onClick={handleProceedToDate}
+                  disabled={selectedProcedures.length === 0}
+                  className={`w-full py-3.5 rounded-2xl text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                    selectedProcedures.length > 0
+                      ? 'bg-[#8E5D52] hover:bg-[#784D43] text-white shadow-xs'
+                      : 'bg-[#EAE4DD] text-[#A8A099] cursor-not-allowed'
+                  }`}
+                >
+                  <span>Continuar para Data e Horário</span>
+                  <span>&rarr;</span>
+                </button>
               </div>
             </div>
           )}
 
           {/* STEP 2: Select Date */}
-          {step === 2 && selectedProcedure && (
+          {step === 2 && selectedProcedures.length > 0 && (
             <div className="space-y-4">
-              {/* Selected procedure mini reminder */}
-              <div className="p-3.5 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[#7D756D] block">Procedimento selecionado:</span>
-                  <span className="font-bold text-[#2D2926]">{selectedProcedure.name}</span>
+              {/* Selected procedures mini reminder */}
+              <div className="p-3.5 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#7D756D] font-semibold">
+                    Procedimentos Selecionados ({selectedProcedures.length}):
+                  </span>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="text-[11px] font-bold text-[#8E5D52] hover:underline cursor-pointer"
+                  >
+                    + Adicionar / Alterar
+                  </button>
                 </div>
-                <div className="text-right">
-                  <span className="font-extrabold text-[#8E5D52]">{formatCurrency(selectedProcedure.price)}</span>
-                  <span className="text-[#7D756D] block">{formatTimeFriendly(selectedProcedure.durationMinutes)}</span>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedProcedures.map((p) => (
+                    <span
+                      key={p.id}
+                      className="inline-flex items-center gap-1 bg-white border border-[#EAE4DD] px-2.5 py-1 rounded-xl text-[11px] font-semibold text-[#2D2926]"
+                    >
+                      <span>{p.name}</span>
+                      <span className="text-[#8E5D52]">({formatTimeFriendly(p.durationMinutes)})</span>
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-[#F0EAE4] text-[11px]">
+                  <span className="text-[#7D756D]">
+                    Tempo total contínuo necessário: <strong>{formatTimeFriendly(totalDurationMinutes)}</strong>
+                  </span>
+                  <span className="font-bold text-[#8E5D52]">{formatCurrency(totalPrice)}</span>
                 </div>
               </div>
 
@@ -363,7 +498,11 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                         {day.dayNum}
                       </span>
                       <span className="text-[10px] font-medium opacity-90">
-                        {day.label.startsWith('Hoje') ? 'Hoje' : day.label.startsWith('Amanhã') ? 'Amanhã' : day.dateStr.split('-')[1] + '/' + day.dateStr.split('-')[0].slice(2)}
+                        {day.label.startsWith('Hoje')
+                          ? 'Hoje'
+                          : day.label.startsWith('Amanhã')
+                          ? 'Amanhã'
+                          : day.dateStr.split('-')[1] + '/' + day.dateStr.split('-')[0].slice(2)}
                       </span>
                     </button>
                   ))}
@@ -372,25 +511,38 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
             </div>
           )}
 
-          {/* STEP 3: Select Time */}
-          {step === 3 && selectedProcedure && selectedDate && (
+          {/* STEP 3: Select Time (Calculated for Total Combined Duration) */}
+          {step === 3 && selectedProcedures.length > 0 && selectedDate && (
             <div className="space-y-4">
-              <div className="p-3.5 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-[#7D756D] block">Data escolhida:</span>
-                  <span className="font-bold text-[#2D2926]">{formatDateBR(selectedDate)} ({getRelativeDayLabel(selectedDate)})</span>
+              <div className="p-3.5 bg-[#FDFBF9] rounded-2xl border border-[#EAE4DD] space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#7D756D]">Data escolhida:</span>
+                  <span className="font-bold text-[#2D2926]">
+                    {formatDateBR(selectedDate)} ({getRelativeDayLabel(selectedDate)})
+                  </span>
                 </div>
-                <div className="text-right">
-                  <span className="text-[#7D756D] block">Duração necessária:</span>
-                  <span className="font-bold text-[#2D2926]">{formatTimeFriendly(selectedProcedure.durationMinutes)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#7D756D]">Duração contínua necessária:</span>
+                  <span className="font-bold text-[#8E5D52]">
+                    {formatTimeFriendly(totalDurationMinutes)} ({selectedProcedures.length} {selectedProcedures.length === 1 ? 'serviço' : 'serviços'})
+                  </span>
                 </div>
+                {config.lunchBreak?.enabled && (
+                  <p className="text-[10px] text-[#7D756D] pt-1 border-t border-[#F0EAE4]">
+                    ☕ O sistema garante que o tempo total não colida com o almoço ({config.lunchBreak.start} às {config.lunchBreak.end}) nem com outros agendamentos.
+                  </p>
+                )}
               </div>
 
               {availableSlots.length === 0 ? (
                 <div className="text-center py-8 bg-[#FDFBF9] rounded-2xl border border-dashed border-[#EAE4DD] space-y-2">
                   <Clock className="w-8 h-8 text-[#A8A099] mx-auto" />
-                  <p className="text-xs text-[#2D2926] font-semibold">Nenhum horário livre para esta data.</p>
-                  <p className="text-[11px] text-[#7D756D]">Todos os horários já estão agendados ou bloqueados.</p>
+                  <p className="text-xs text-[#2D2926] font-semibold">
+                    Nenhum horário contínuo de {formatTimeFriendly(totalDurationMinutes)} disponível nesta data.
+                  </p>
+                  <p className="text-[11px] text-[#7D756D]">
+                    Os horários livres restantes não comportam o tempo total dos procedimentos selecionados.
+                  </p>
                   <button
                     onClick={() => setStep(2)}
                     className="mt-2 text-xs font-bold text-[#8E5D52] hover:underline cursor-pointer"
@@ -407,20 +559,26 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                         <span>☀️ Manhã</span>
                       </span>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {groupedSlots.morning.map((slot) => (
-                          <button
-                            key={slot}
-                            id={`time-slot-${slot}`}
-                            onClick={() => handleSelectTime(slot)}
-                            className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
-                              selectedTime === slot
-                                ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
-                                : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
+                        {groupedSlots.morning.map((slot) => {
+                          const slotEnd = addMinutesToTime(slot, totalDurationMinutes);
+                          return (
+                            <button
+                              key={slot}
+                              id={`time-slot-${slot}`}
+                              onClick={() => handleSelectTime(slot)}
+                              className={`py-2 px-2 rounded-2xl border transition-all cursor-pointer text-center ${
+                                selectedTime === slot
+                                  ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
+                                  : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
+                              }`}
+                            >
+                              <span className="text-xs font-bold block">{slot}</span>
+                              <span className={`text-[9px] block ${selectedTime === slot ? 'text-white/80' : 'text-[#7D756D]'}`}>
+                                até {slotEnd}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -432,20 +590,26 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                         <span>🌤️ Tarde</span>
                       </span>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {groupedSlots.afternoon.map((slot) => (
-                          <button
-                            key={slot}
-                            id={`time-slot-${slot}`}
-                            onClick={() => handleSelectTime(slot)}
-                            className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
-                              selectedTime === slot
-                                ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
-                                : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
+                        {groupedSlots.afternoon.map((slot) => {
+                          const slotEnd = addMinutesToTime(slot, totalDurationMinutes);
+                          return (
+                            <button
+                              key={slot}
+                              id={`time-slot-${slot}`}
+                              onClick={() => handleSelectTime(slot)}
+                              className={`py-2 px-2 rounded-2xl border transition-all cursor-pointer text-center ${
+                                selectedTime === slot
+                                  ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
+                                  : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
+                              }`}
+                            >
+                              <span className="text-xs font-bold block">{slot}</span>
+                              <span className={`text-[9px] block ${selectedTime === slot ? 'text-white/80' : 'text-[#7D756D]'}`}>
+                                até {slotEnd}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -457,20 +621,26 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                         <span>🌙 Noite</span>
                       </span>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {groupedSlots.evening.map((slot) => (
-                          <button
-                            key={slot}
-                            id={`time-slot-${slot}`}
-                            onClick={() => handleSelectTime(slot)}
-                            className={`py-2.5 px-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${
-                              selectedTime === slot
-                                ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
-                                : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
+                        {groupedSlots.evening.map((slot) => {
+                          const slotEnd = addMinutesToTime(slot, totalDurationMinutes);
+                          return (
+                            <button
+                              key={slot}
+                              id={`time-slot-${slot}`}
+                              onClick={() => handleSelectTime(slot)}
+                              className={`py-2 px-2 rounded-2xl border transition-all cursor-pointer text-center ${
+                                selectedTime === slot
+                                  ? 'bg-[#8E5D52] text-white border-[#8E5D52] shadow-xs'
+                                  : 'bg-white text-[#2D2926] border-[#EAE4DD] hover:border-[#8E5D52] hover:bg-[#FDFBF9]'
+                              }`}
+                            >
+                              <span className="text-xs font-bold block">{slot}</span>
+                              <span className={`text-[9px] block ${selectedTime === slot ? 'text-white/80' : 'text-[#7D756D]'}`}>
+                                até {slotEnd}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -517,7 +687,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                   />
                 </div>
                 <p className="text-[11px] text-[#7D756D] mt-1">
-                  Usaremos este número para enviar o lembrete de confirmação.
+                  Usaremos este número para enviar a confirmação do agendamento.
                 </p>
               </div>
 
@@ -530,7 +700,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                   <textarea
                     id="client-notes-input"
                     rows={2}
-                    placeholder="Ex: Tenho alergia a esmalte comum, evento às 19h..."
+                    placeholder="Ex: Alergia a algum produto, preferência de tom..."
                     value={clientNotes}
                     onChange={(e) => setClientNotes(e.target.value)}
                     className="w-full pl-10 pr-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-2xl text-sm text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none resize-none"
@@ -549,17 +719,34 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
           )}
 
           {/* STEP 5: Review & Confirm */}
-          {step === 5 && selectedProcedure && (
+          {step === 5 && selectedProcedures.length > 0 && (
             <div className="space-y-4">
               <div className="bg-[#FDFBF9] border border-[#EAE4DD] rounded-3xl p-5 space-y-3">
-                <h3 className="font-bold text-[#2D2926] text-sm border-b border-[#EAE4DD] pb-2">
-                  Resumo do seu agendamento:
+                <h3 className="font-bold text-[#2D2926] text-sm border-b border-[#EAE4DD] pb-2 flex items-center justify-between">
+                  <span>Resumo do seu agendamento:</span>
+                  <span className="text-xs text-[#8E5D52] font-semibold">
+                    {selectedProcedures.length} {selectedProcedures.length === 1 ? 'procedimento' : 'procedimentos'}
+                  </span>
                 </h3>
 
+                {/* Procedure Breakdown List */}
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between py-1 border-b border-[#F0EAE4] gap-2">
-                    <span className="text-[#7D756D] shrink-0">Procedimento:</span>
-                    <span className="font-bold text-[#2D2926] text-right break-words">{selectedProcedure.name}</span>
+                  <div className="py-1 border-b border-[#F0EAE4] space-y-1.5">
+                    <span className="text-[#7D756D] block font-semibold">Serviços escolhidos:</span>
+                    <div className="space-y-1 pl-1">
+                      {selectedProcedures.map((proc, idx) => (
+                        <div key={proc.id} className="flex justify-between items-center text-[#2D2926]">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-4 h-4 rounded-full bg-[#F5F2ED] text-[#8E5D52] text-[10px] font-bold flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold">{proc.name}</span>
+                            <span className="text-[10px] text-[#7D756D]">({formatTimeFriendly(proc.durationMinutes)})</span>
+                          </span>
+                          <span className="font-semibold text-[#8E5D52]">{formatCurrency(proc.price)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex justify-between py-1 border-b border-[#F0EAE4] gap-2">
@@ -571,13 +758,15 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
 
                   <div className="flex justify-between py-1 border-b border-[#F0EAE4] gap-2">
                     <span className="text-[#7D756D] shrink-0">Horário:</span>
-                    <span className="font-bold text-[#2D2926] text-right">{selectedTime}</span>
+                    <span className="font-bold text-[#2D2926] text-right">
+                      {selectedTime} às {addMinutesToTime(selectedTime, totalDurationMinutes)}
+                    </span>
                   </div>
 
                   <div className="flex justify-between py-1 border-b border-[#F0EAE4] gap-2">
-                    <span className="text-[#7D756D] shrink-0">Duração estimada:</span>
+                    <span className="text-[#7D756D] shrink-0">Duração Total:</span>
                     <span className="font-semibold text-[#2D2926] text-right">
-                      {formatTimeFriendly(selectedProcedure.durationMinutes)}
+                      {formatTimeFriendly(totalDurationMinutes)}
                     </span>
                   </div>
 
@@ -594,7 +783,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                   <div className="flex justify-between pt-2 text-sm gap-2">
                     <span className="font-bold text-[#2D2926] shrink-0">Valor Total:</span>
                     <span className="font-extrabold text-[#8E5D52] text-base text-right">
-                      {formatCurrency(selectedProcedure.price)}
+                      {formatCurrency(totalPrice)}
                     </span>
                   </div>
                 </div>
@@ -632,17 +821,37 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
               </div>
 
               {/* Summary Card */}
-              <div className="bg-[#FDFBF9] border border-[#EAE4DD] rounded-3xl p-5 text-left text-xs space-y-2">
-                <div className="flex justify-between gap-2">
-                  <span className="text-[#7D756D] shrink-0">Procedimento:</span>
-                  <span className="font-bold text-[#2D2926] text-right break-words">{confirmedAppointment.procedureName}</span>
+              <div className="bg-[#FDFBF9] border border-[#EAE4DD] rounded-3xl p-5 text-left text-xs space-y-2.5">
+                <div>
+                  <span className="text-[#7D756D] block font-semibold mb-1">Procedimentos:</span>
+                  {confirmedAppointment.procedures && confirmedAppointment.procedures.length > 1 ? (
+                    <div className="space-y-1">
+                      {confirmedAppointment.procedures.map((p, idx) => (
+                        <div key={p.id} className="flex justify-between text-[#2D2926]">
+                          <span>• {p.name} ({formatTimeFriendly(p.durationMinutes)})</span>
+                          <span className="font-semibold text-[#8E5D52]">{formatCurrency(p.price)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="font-bold text-[#2D2926]">{confirmedAppointment.procedureName}</span>
+                  )}
                 </div>
-                <div className="flex justify-between gap-2">
+
+                <div className="flex justify-between gap-2 pt-2 border-t border-[#F0EAE4]">
                   <span className="text-[#7D756D] shrink-0">Data & Horário:</span>
                   <span className="font-bold text-[#8E5D52] text-right">
-                    {formatDateBR(confirmedAppointment.date)} às {confirmedAppointment.time}
+                    {formatDateBR(confirmedAppointment.date)} às {confirmedAppointment.time} (duração de {formatTimeFriendly(confirmedAppointment.durationMinutes)})
                   </span>
                 </div>
+
+                <div className="flex justify-between gap-2">
+                  <span className="text-[#7D756D] shrink-0">Valor Total:</span>
+                  <span className="font-bold text-[#2D2926] text-right">
+                    {formatCurrency(confirmedAppointment.finalPrice || confirmedAppointment.price)}
+                  </span>
+                </div>
+
                 <div className="flex justify-between gap-2">
                   <span className="text-[#7D756D] shrink-0">Local:</span>
                   <span className="text-[#2D2926] text-right break-words">{config.address}</span>

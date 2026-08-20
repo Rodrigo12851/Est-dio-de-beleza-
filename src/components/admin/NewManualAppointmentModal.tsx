@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSalon } from '../../context/SalonContext';
-import { Procedure, AppointmentStatus, PaymentMethod } from '../../types';
+import { Procedure, AppointmentStatus, AppointmentProcedureItem } from '../../types';
 import {
   formatCurrency,
   formatTimeFriendly,
@@ -8,8 +8,8 @@ import {
   timeToMinutes,
   minutesToTime,
 } from '../../utils/dateUtils';
-import { formatPhoneMask, cleanPhone } from '../../utils/whatsappUtils';
-import { X, Calendar, Clock, User, Phone, FileText, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { formatPhoneMask } from '../../utils/whatsappUtils';
+import { X, Clock, User, Phone, CheckCircle2, AlertCircle, Check, Layers } from 'lucide-react';
 
 interface NewManualAppointmentModalProps {
   isOpen: boolean;
@@ -24,11 +24,11 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
   initialDate,
   initialTime,
 }) => {
-  const { procedures, clients, createAppointment, checkSlotAvailability } = useSalon();
+  const { procedures, clients, createAppointment } = useSalon();
 
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
-  const [procedureId, setProcedureId] = useState('');
+  const [selectedProcedureIds, setSelectedProcedureIds] = useState<string[]>([]);
   const [date, setDate] = useState(initialDate || getTodayDateStr());
   const [time, setTime] = useState(initialTime || '10:00');
   const [customPrice, setCustomPrice] = useState<string>('');
@@ -38,27 +38,52 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
   const [source, setSource] = useState<'whatsapp' | 'presencial'>('whatsapp');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Selected procedure
-  const selectedProc = procedures.find((p) => p.id === procedureId);
+  // Active procedures list
+  const activeProcedures = procedures.filter((p) => p.active);
+
+  // Selected procedures objects
+  const selectedProcedures = useMemo(() => {
+    return procedures.filter((p) => selectedProcedureIds.includes(p.id));
+  }, [procedures, selectedProcedureIds]);
+
+  const defaultCombinedPrice = useMemo(() => {
+    return selectedProcedures.reduce((acc, p) => acc + p.price, 0);
+  }, [selectedProcedures]);
+
+  const totalDurationMinutes = useMemo(() => {
+    return selectedProcedures.reduce((acc, p) => acc + p.durationMinutes, 0);
+  }, [selectedProcedures]);
+
+  const proceduresTitle = useMemo(() => {
+    if (selectedProcedures.length === 0) return '';
+    return selectedProcedures.map((p) => p.name).join(' + ');
+  }, [selectedProcedures]);
 
   useEffect(() => {
     if (isOpen) {
       if (initialDate) setDate(initialDate);
       if (initialTime) setTime(initialTime);
-      if (procedures.length > 0 && !procedureId) {
-        setProcedureId(procedures[0].id);
+      if (procedures.length > 0 && selectedProcedureIds.length === 0) {
+        setSelectedProcedureIds([procedures[0].id]);
         setCustomPrice(String(procedures[0].price));
       }
       setErrorMessage('');
     }
   }, [isOpen, initialDate, initialTime, procedures]);
 
-  const handleProcedureChange = (id: string) => {
-    setProcedureId(id);
-    const proc = procedures.find((p) => p.id === id);
-    if (proc) {
-      setCustomPrice(String(proc.price));
-    }
+  const handleToggleProcedure = (id: string) => {
+    setSelectedProcedureIds((prev) => {
+      let next: string[];
+      if (prev.includes(id)) {
+        if (prev.length === 1) return prev; // keep at least 1
+        next = prev.filter((pId) => pId !== id);
+      } else {
+        next = [...prev, id];
+      }
+      const sum = procedures.filter((p) => next.includes(p.id)).reduce((acc, p) => acc + p.price, 0);
+      setCustomPrice(String(sum));
+      return next;
+    });
   };
 
   // Quick auto-complete from existing clients
@@ -74,8 +99,8 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProc) {
-      setErrorMessage('Selecione um procedimento.');
+    if (selectedProcedures.length === 0) {
+      setErrorMessage('Selecione ao menos um procedimento.');
       return;
     }
     if (!clientName.trim()) {
@@ -87,20 +112,31 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
       return;
     }
 
-    const priceNum = parseFloat(customPrice) || selectedProc.price;
+    const priceNum = parseFloat(customPrice) || defaultCombinedPrice;
     const discountNum = parseFloat(discount) || 0;
     const finalPriceNum = Math.max(0, priceNum - discountNum);
+
+    const procedureItems: AppointmentProcedureItem[] = selectedProcedures.map((p) => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      durationMinutes: p.durationMinutes,
+      photo: p.photo,
+    }));
 
     const res = createAppointment({
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim() || '(11) 99999-9999',
       clientNotes: clientNotes.trim(),
-      procedureId: selectedProc.id,
-      procedureName: selectedProc.name,
-      procedureCategory: selectedProc.category,
+      procedureId: selectedProcedures[0].id,
+      procedureName: proceduresTitle,
+      procedureCategory: selectedProcedures[0].category,
+      procedureIds: selectedProcedureIds,
+      procedures: procedureItems,
       date,
       time,
-      durationMinutes: selectedProc.durationMinutes,
+      durationMinutes: totalDurationMinutes,
       price: priceNum,
       discount: discountNum,
       finalPrice: finalPriceNum,
@@ -208,23 +244,50 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
             </div>
           </div>
 
-          {/* Procedure */}
-          <div>
-            <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-              Procedimento *
-            </label>
-            <select
-              id="manual-procedure-select"
-              value={procedureId}
-              onChange={(e) => handleProcedureChange(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-sm text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
-            >
-              {procedures.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({formatTimeFriendly(p.durationMinutes)} — {formatCurrency(p.price)})
-                </option>
-              ))}
-            </select>
+          {/* Procedure Selection (Multi-select list) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider">
+                Procedimentos Selecionados *
+              </label>
+              <span className="text-[11px] text-[#8E5D52] font-semibold">
+                {selectedProcedureIds.length} selecionado(s)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 bg-[#FDFBF9] border border-[#EAE4DD] rounded-2xl">
+              {activeProcedures.map((proc) => {
+                const isSelected = selectedProcedureIds.includes(proc.id);
+                return (
+                  <button
+                    key={proc.id}
+                    type="button"
+                    onClick={() => handleToggleProcedure(proc.id)}
+                    className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'border-[#8E5D52] bg-white ring-1 ring-[#8E5D52] shadow-xs'
+                        : 'border-[#EAE4DD] bg-white/60 hover:bg-white hover:border-[#8E5D52]/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                          isSelected ? 'bg-[#8E5D52] border-[#8E5D52] text-white' : 'border-[#A8A099]'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-[#2D2926] truncate">{proc.name}</p>
+                        <p className="text-[10px] text-[#7D756D]">
+                          {formatTimeFriendly(proc.durationMinutes)} • {formatCurrency(proc.price)}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Date & Time */}
@@ -259,10 +322,10 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
           </div>
 
           {/* Duration info notice */}
-          {selectedProc && (
+          {selectedProcedures.length > 0 && (
             <div className="p-3 bg-[#F5F2ED] rounded-2xl text-xs text-[#59524C] border border-[#EAE4DD] flex items-center justify-between">
-              <span>⏱️ Duração: <strong className="text-[#2D2926]">{formatTimeFriendly(selectedProc.durationMinutes)}</strong></span>
-              <span>🔒 Bloqueará até <strong className="text-[#2D2926]">{time ? minutesToTime(timeToMinutes(time) + selectedProc.durationMinutes) : '--:--'}</strong></span>
+              <span>⏱️ Duração Total: <strong className="text-[#2D2926]">{formatTimeFriendly(totalDurationMinutes)}</strong></span>
+              <span>🔒 Bloqueará até <strong className="text-[#2D2926]">{time ? minutesToTime(timeToMinutes(time) + totalDurationMinutes) : '--:--'}</strong></span>
             </div>
           )}
 
@@ -270,7 +333,7 @@ export const NewManualAppointmentModal: React.FC<NewManualAppointmentModalProps>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                Valor Base (R$)
+                Valor Total (R$)
               </label>
               <input
                 type="number"

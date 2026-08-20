@@ -1,5 +1,5 @@
 import { Appointment, SalonConfig } from '../types';
-import { formatDateBR, formatCurrency } from './dateUtils';
+import { formatDateBR, formatCurrency, formatTimeFriendly } from './dateUtils';
 
 export function cleanPhone(phone: string): string {
   return phone.replace(/\D/g, '');
@@ -44,11 +44,19 @@ export function buildClientConfirmationShareUrl(appointment: Appointment, salonC
   const phoneDigits = cleanPhone(salonConfig.whatsapp);
   const targetPhone = phoneDigits.startsWith('55') ? phoneDigits : `55${phoneDigits}`;
   
+  let procedureDetails = `✨ *Procedimento:* ${appointment.procedureName}`;
+  if (appointment.procedures && appointment.procedures.length > 1) {
+    const list = appointment.procedures
+      .map((p) => `  • ${p.name} (${formatTimeFriendly(p.durationMinutes)} - ${formatCurrency(p.price)})`)
+      .join('\n');
+    procedureDetails = `✨ *Procedimentos Selecionados:*\n${list}\n⏳ *Duração Total:* ${formatTimeFriendly(appointment.durationMinutes)}`;
+  }
+
   const text = `Olá, ${salonConfig.ownerName}! 💕 Acabei de agendar meu horário pelo site:\n\n` +
-    `✨ *Procedimento:* ${appointment.procedureName}\n` +
+    `${procedureDetails}\n` +
     `📅 *Data:* ${formatDateBR(appointment.date)}\n` +
     `⏰ *Horário:* ${appointment.time}\n` +
-    `💰 *Valor:* ${formatCurrency(appointment.finalPrice || appointment.price)}\n` +
+    `💰 *Valor Total:* ${formatCurrency(appointment.finalPrice || appointment.price)}\n` +
     `👤 *Cliente:* ${appointment.clientName}\n\n` +
     `Aguardo a confirmação! ✨`;
 

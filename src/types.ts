@@ -27,6 +27,15 @@ export interface GalleryWork {
   procedureId?: string;
 }
 
+export interface AppointmentProcedureItem {
+  id: string;
+  name: string;
+  category: ProcedureCategory;
+  price: number;
+  durationMinutes: number;
+  photo?: string;
+}
+
 export interface Appointment {
   id: string;
   clientName: string;
@@ -35,6 +44,8 @@ export interface Appointment {
   procedureId: string;
   procedureName: string;
   procedureCategory?: ProcedureCategory;
+  procedureIds?: string[];
+  procedures?: AppointmentProcedureItem[];
   date: string; // YYYY-MM-DD
   time: string; // HH:MM
   durationMinutes: number;
