@@ -15,9 +15,15 @@ import {
   MapPin,
   Instagram,
   User,
-  Coffee
+  Coffee,
+  Eye,
+  EyeOff,
+  Bell,
+  Volume2,
+  Smartphone
 } from 'lucide-react';
 import { ImageUploadPicker } from '../common/ImageUploadPicker';
+import { notificationSound } from '../../utils/audioNotification';
 
 const DAYS_NAMES = [
   'Domingo',
@@ -30,16 +36,39 @@ const DAYS_NAMES = [
 ];
 
 export const AdminSettings: React.FC = () => {
-  const { config, updateSalonConfig } = useSalon();
+  const { config, updateSalonConfig, playNotificationSound } = useSalon();
 
   // Local state initialized with current config
   const [formData, setFormData] = useState<SalonConfig>(config);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'profile' | 'hours' | 'whatsapp' | 'security'>('profile');
+  const [showPin, setShowPin] = useState(false);
+  const [testedSound, setTestedSound] = useState(false);
+  const [notificationsGranted, setNotificationsGranted] = useState(false);
 
   useEffect(() => {
     setFormData(config);
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationsGranted(Notification.permission === 'granted');
+    }
   }, [config]);
+
+  const handleTestSound = () => {
+    notificationSound.playBookingRingtone();
+    setTestedSound(true);
+    setTimeout(() => setTestedSound(false), 3000);
+  };
+
+  const handleRequestNotifications = async () => {
+    const granted = await notificationSound.requestNotificationPermission();
+    setNotificationsGranted(granted);
+    if (granted) {
+      notificationSound.showSystemNotification(
+        'Notificações Ativadas! 🔔',
+        'Seu celular/computador tocará sempre que uma cliente fizer um agendamento.'
+      );
+    }
+  };
 
   const handleWorkingHourChange = (
     dayIndex: number,
@@ -408,30 +437,100 @@ export const AdminSettings: React.FC = () => {
 
         {/* SUBTAB: SECURITY & PIN */}
         {activeSubTab === 'security' && (
-          <div className="bg-white rounded-3xl border border-[#EAE4DD] p-6 shadow-xs space-y-4">
-            <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926] border-b border-[#F5F2ED] pb-3">
-              Controle de Acesso ao Painel
-            </h3>
+          <div className="space-y-6">
+            {/* PIN Settings Card */}
+            <div className="bg-white rounded-3xl border border-[#EAE4DD] p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F5F2ED] pb-3">
+                <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926] flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-[#8E5D52]" />
+                  <span>Controle de Acesso ao Painel (PIN)</span>
+                </h3>
+                <span className="text-[10px] font-bold text-[#8E5D52] bg-[#F9F5F2] px-2.5 py-1 rounded-full border border-[#EAE4DD]">
+                  Segurança
+                </span>
+              </div>
 
-            <div className="max-w-md space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                  PIN de Acesso da Proprietária *
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-[#A8A099] absolute left-3.5 top-3.5" />
-                  <input
-                    type="password"
-                    maxLength={10}
-                    required
-                    value={formData.adminPin}
-                    onChange={(e) => setFormData({ ...formData, adminPin: e.target.value })}
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-sm font-mono text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
-                  />
+              <div className="max-w-md space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
+                    PIN de Acesso da Proprietária ({config.ownerName}) *
+                  </label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[#7D756D]">
+                      <Lock className="w-4 h-4" />
+                    </div>
+
+                    <input
+                      type={showPin ? 'text' : 'password'}
+                      maxLength={10}
+                      required
+                      value={formData.adminPin}
+                      onChange={(e) => setFormData({ ...formData, adminPin: e.target.value })}
+                      className="w-full pl-10 pr-11 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-sm font-mono text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
+                    />
+
+                    {/* Colorless neutral eye icon to view password */}
+                    <button
+                      type="button"
+                      id="toggle-settings-pin-visibility"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#7D756D] hover:text-[#2D2926] rounded-lg transition-colors cursor-pointer"
+                      title={showPin ? 'Ocultar senha' : 'Visualizar senha'}
+                    >
+                      {showPin ? (
+                        <EyeOff className="w-4 h-4 text-[#7D756D]" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-[#7D756D]" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[#7D756D] mt-1">
+                    Este PIN é solicitado sempre que você acessa o painel de gestão do salão.
+                  </p>
                 </div>
-                <p className="text-[11px] text-[#7D756D] mt-1">
-                  Este PIN é solicitado sempre que você acessa o painel administrativo.
+              </div>
+            </div>
+
+            {/* Cell Phone Ringtone & Notification Alert Settings Card */}
+            <div className="bg-white rounded-3xl border border-[#EAE4DD] p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F5F2ED] pb-3">
+                <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926] flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-emerald-600" />
+                  <span>Toque e Notificação de Novos Agendamentos</span>
+                </h3>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  Som Automático Ativo
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs text-[#59524C] leading-relaxed">
+                  Sempre que uma cliente realizar um agendamento online pelo site, o sistema toca um alarme sonoro agradável e emite uma notificação em tempo real no seu celular ou computador.
                 </p>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleTestSound}
+                    className="px-4 py-2.5 bg-[#F5F2ED] hover:bg-[#EAE4DD] text-[#2D2926] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#EAE4DD]"
+                  >
+                    <Volume2 className="w-4 h-4 text-[#8E5D52]" />
+                    <span>{testedSound ? '🔊 Tocando no Celular...' : 'Testar Toque do Celular'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRequestNotifications}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border ${
+                      notificationsGranted
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-[#8E5D52] text-white hover:bg-[#784D43] border-transparent'
+                    }`}
+                  >
+                    <Bell className="w-4 h-4" />
+                    <span>{notificationsGranted ? 'Notificações Ativadas no Aparelho ✓' : 'Permitir Notificações no Celular'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

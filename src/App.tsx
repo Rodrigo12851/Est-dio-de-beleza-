@@ -9,6 +9,7 @@ import { BookingFlowModal } from './components/client/BookingFlowModal';
 import { ProcedureDetailModal } from './components/client/ProcedureDetailModal';
 import { GalleryLightboxModal } from './components/client/GalleryLightboxModal';
 import { AdminLoginModal } from './components/client/AdminLoginModal';
+import { AppointmentNotificationBanner } from './components/common/AppointmentNotificationBanner';
 
 // Admin components
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -22,7 +23,15 @@ import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
 
 const MainApp: React.FC = () => {
-  const { viewMode, adminTab } = useSalon();
+  const {
+    viewMode,
+    adminTab,
+    setAdminTab,
+    setViewMode,
+    isAdminAuthenticated,
+    lastCreatedAppointment,
+    clearNotification,
+  } = useSalon();
 
   // Modals for Client View
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -48,71 +57,87 @@ const MainApp: React.FC = () => {
     setSelectedGalleryWork(work);
   };
 
-  // ADMIN VIEW
-  if (viewMode === 'admin') {
-    return (
-      <AdminLayout>
-        {adminTab === 'dashboard' && <AdminDashboard />}
-        {adminTab === 'calendar' && <AdminCalendar />}
-        {adminTab === 'clients' && <AdminClients />}
-        {adminTab === 'procedures' && <AdminProcedures />}
-        {adminTab === 'gallery' && <AdminGallery />}
-        {adminTab === 'financial' && <AdminFinancial />}
-        {adminTab === 'reports' && <AdminReports />}
-        {adminTab === 'settings' && <AdminSettings />}
-      </AdminLayout>
-    );
-  }
+  const handleViewNotificationAppointment = () => {
+    if (isAdminAuthenticated) {
+      setViewMode('admin');
+      setAdminTab('calendar');
+    } else {
+      setIsAdminLoginOpen(true);
+    }
+  };
 
-  // CLIENT VIEW
   return (
-    <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#EAE4DD] selection:text-[#8E5D52]">
-      {/* Client Header Navbar */}
-      <ClientNavbar
-        onOpenBooking={() => handleStartBooking()}
-        onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+    <>
+      {/* Real-time Ringtone Notification Banner for Owner */}
+      <AppointmentNotificationBanner
+        appointment={lastCreatedAppointment}
+        onClose={clearNotification}
+        onViewAppointment={handleViewNotificationAppointment}
       />
 
-      {/* Main Client Homepage */}
-      <ClientHome
-        onOpenBookingWithProcedure={handleStartBooking}
-        onOpenProcedureDetails={handleOpenProcedureDetail}
-        onOpenGalleryZoom={handleOpenGalleryLightbox}
-      />
+      {/* ADMIN VIEW */}
+      {viewMode === 'admin' ? (
+        <AdminLayout>
+          {adminTab === 'dashboard' && <AdminDashboard />}
+          {adminTab === 'calendar' && <AdminCalendar />}
+          {adminTab === 'clients' && <AdminClients />}
+          {adminTab === 'procedures' && <AdminProcedures />}
+          {adminTab === 'gallery' && <AdminGallery />}
+          {adminTab === 'financial' && <AdminFinancial />}
+          {adminTab === 'reports' && <AdminReports />}
+          {adminTab === 'settings' && <AdminSettings />}
+        </AdminLayout>
+      ) : (
+        /* CLIENT VIEW */
+        <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#EAE4DD] selection:text-[#8E5D52]">
+          {/* Client Header Navbar */}
+          <ClientNavbar
+            onOpenBooking={() => handleStartBooking()}
+            onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
+          />
 
-      {/* 5-Step Booking Flow Modal */}
-      <BookingFlowModal
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
-        initialProcedure={selectedBookingProcedure}
-      />
+          {/* Main Client Homepage */}
+          <ClientHome
+            onOpenBookingWithProcedure={handleStartBooking}
+            onOpenProcedureDetails={handleOpenProcedureDetail}
+            onOpenGalleryZoom={handleOpenGalleryLightbox}
+          />
 
-      {/* Procedure Detail Modal */}
-      <ProcedureDetailModal
-        procedure={selectedDetailProcedure}
-        onClose={() => setSelectedDetailProcedure(null)}
-        onBookProcedure={(proc) => {
-          setSelectedDetailProcedure(null);
-          handleStartBooking(proc);
-        }}
-      />
+          {/* 5-Step Booking Flow Modal */}
+          <BookingFlowModal
+            isOpen={isBookingOpen}
+            onClose={() => setIsBookingOpen(false)}
+            initialProcedure={selectedBookingProcedure}
+          />
 
-      {/* Gallery Lightbox Modal */}
-      <GalleryLightboxModal
-        work={selectedGalleryWork}
-        onClose={() => setSelectedGalleryWork(null)}
-        onBookProcedure={(proc) => {
-          setSelectedGalleryWork(null);
-          handleStartBooking(proc);
-        }}
-      />
+          {/* Procedure Detail Modal */}
+          <ProcedureDetailModal
+            procedure={selectedDetailProcedure}
+            onClose={() => setSelectedDetailProcedure(null)}
+            onBookProcedure={(proc) => {
+              setSelectedDetailProcedure(null);
+              handleStartBooking(proc);
+            }}
+          />
 
-      {/* Admin PIN Login Modal */}
-      <AdminLoginModal
-        isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
-      />
-    </div>
+          {/* Gallery Lightbox Modal */}
+          <GalleryLightboxModal
+            work={selectedGalleryWork}
+            onClose={() => setSelectedGalleryWork(null)}
+            onBookProcedure={(proc) => {
+              setSelectedGalleryWork(null);
+              handleStartBooking(proc);
+            }}
+          />
+
+          {/* Admin PIN Login Modal */}
+          <AdminLoginModal
+            isOpen={isAdminLoginOpen}
+            onClose={() => setIsAdminLoginOpen(false)}
+          />
+        </div>
+      )}
+    </>
   );
 };
 

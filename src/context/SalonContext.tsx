@@ -23,8 +23,10 @@ import {
   getTodayDateStr,
   doIntervalsOverlap,
   addMinutesToTime,
+  formatDateBR,
 } from '../utils/dateUtils';
 import { cleanPhone } from '../utils/whatsappUtils';
+import { notificationSound } from '../utils/audioNotification';
 
 interface SalonContextType {
   // Data
@@ -43,6 +45,11 @@ interface SalonContextType {
   setViewMode: (mode: 'client' | 'admin') => void;
   adminTab: 'dashboard' | 'calendar' | 'clients' | 'procedures' | 'gallery' | 'financial' | 'reports' | 'settings';
   setAdminTab: (tab: 'dashboard' | 'calendar' | 'clients' | 'procedures' | 'gallery' | 'financial' | 'reports' | 'settings') => void;
+
+  // Notification Sound & Alert
+  lastCreatedAppointment: Appointment | null;
+  clearNotification: () => void;
+  playNotificationSound: () => void;
 
   // Smart Scheduling Engine
   getAvailableSlotsForDate: (dateStr: string, procedureDurationMinutes: number) => string[];
@@ -137,6 +144,11 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const validTabs = ['dashboard', 'calendar', 'clients', 'procedures', 'gallery', 'financial', 'reports', 'settings'];
     return validTabs.includes(saved || '') ? (saved as any) : 'dashboard';
   });
+
+  const [lastCreatedAppointment, setLastCreatedAppointment] = useState<Appointment | null>(null);
+
+  const clearNotification = () => setLastCreatedAppointment(null);
+  const playNotificationSound = () => notificationSound.playBookingRingtone();
 
   // Persistence effects
   useEffect(() => {
@@ -351,6 +363,19 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAppointments((prev) => [...prev, newAppointment]);
     syncClientProfile(data.clientName, data.clientPhone, data.clientNotes);
 
+    // Play ringing sound & trigger notifications for owner
+    try {
+      notificationSound.playBookingRingtone();
+      notificationSound.showSystemNotification(
+        'Novo Agendamento! 💕',
+        `${data.clientName} agendou ${data.procedureName} para ${formatDateBR(data.date)} às ${data.time}`
+      );
+    } catch {
+      // ignore
+    }
+
+    setLastCreatedAppointment(newAppointment);
+
     return { success: true, appointment: newAppointment };
   };
 
@@ -529,6 +554,9 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setViewMode,
         adminTab,
         setAdminTab,
+        lastCreatedAppointment,
+        clearNotification,
+        playNotificationSound,
         getAvailableSlotsForDate,
         isDateAvailable,
         checkSlotAvailability,

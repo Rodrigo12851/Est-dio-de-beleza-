@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSalon } from '../../context/SalonContext';
-import { Sparkles, MessageCircle, Shield, Phone } from 'lucide-react';
+import { Sparkles, MessageCircle, Shield } from 'lucide-react';
 import { buildWhatsAppDirectContactUrl } from '../../utils/whatsappUtils';
 
 interface ClientNavbarProps {

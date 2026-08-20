@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSalon } from '../../context/SalonContext';
-import { Lock, X, KeyRound, AlertCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import { Lock, X, AlertCircle, Sparkles, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 }) => {
   const { loginAdmin, config } = useSalon();
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState(false);
 
   if (!isOpen) return null;
@@ -76,21 +77,37 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1.5 text-center">
               PIN de 4 dígitos
             </label>
-            <div className="relative">
-              <KeyRound className="w-4 h-4 text-[#A8A099] absolute left-3.5 top-3.5" />
+            <div className="relative flex items-center">
+              <Lock className="w-4 h-4 text-[#A8A099] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+
               <input
                 id="admin-pin-input"
-                type="password"
+                type={showPin ? 'text' : 'password'}
                 maxLength={6}
                 autoFocus
-                placeholder="••••"
+                placeholder={showPin ? '1234' : '••••'}
                 value={pin}
                 onChange={(e) => {
                   setPin(e.target.value);
                   if (error) setError(false);
                 }}
-                className="w-full pl-10 pr-4 py-3 bg-[#FDFBF9] border border-[#EAE4DD] rounded-2xl text-center text-lg font-mono tracking-widest text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
+                className="w-full pl-10 pr-11 py-3 bg-[#FDFBF9] border border-[#EAE4DD] rounded-2xl text-center text-lg font-mono tracking-widest text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
               />
+
+              {/* Colorless neutral eye icon button to toggle password visibility */}
+              <button
+                type="button"
+                id="toggle-pin-visibility-btn"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#7D756D] hover:text-[#2D2926] rounded-lg transition-colors cursor-pointer"
+                title={showPin ? 'Ocultar senha' : 'Visualizar senha'}
+              >
+                {showPin ? (
+                  <EyeOff className="w-4 h-4 text-[#7D756D]" />
+                ) : (
+                  <Eye className="w-4 h-4 text-[#7D756D]" />
+                )}
+              </button>
             </div>
           </div>
 
