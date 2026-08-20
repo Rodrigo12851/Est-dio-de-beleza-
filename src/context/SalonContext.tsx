@@ -87,6 +87,8 @@ const STORAGE_KEYS = {
   BLOCKED_SLOTS: 'bellastudio_blocked_slots',
   CLIENTS: 'bellastudio_clients',
   ADMIN_AUTH: 'bellastudio_admin_auth',
+  VIEW_MODE: 'bellastudio_view_mode',
+  ADMIN_TAB: 'bellastudio_admin_tab',
 };
 
 export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -125,8 +127,16 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
   });
 
-  const [viewMode, setViewMode] = useState<'client' | 'admin'>('client');
-  const [adminTab, setAdminTab] = useState<'dashboard' | 'calendar' | 'clients' | 'procedures' | 'gallery' | 'financial' | 'reports' | 'settings'>('dashboard');
+  const [viewMode, setViewMode] = useState<'client' | 'admin'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
+    return saved === 'admin' || saved === 'client' ? saved : 'client';
+  });
+
+  const [adminTab, setAdminTab] = useState<'dashboard' | 'calendar' | 'clients' | 'procedures' | 'gallery' | 'financial' | 'reports' | 'settings'>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_TAB);
+    const validTabs = ['dashboard', 'calendar', 'clients', 'procedures', 'gallery', 'financial', 'reports', 'settings'];
+    return validTabs.includes(saved || '') ? (saved as any) : 'dashboard';
+  });
 
   // Persistence effects
   useEffect(() => {
@@ -156,6 +166,14 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, String(isAdminAuthenticated));
   }, [isAdminAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_TAB, adminTab);
+  }, [adminTab]);
 
   // Login / Auth
   const loginAdmin = (pin: string): boolean => {

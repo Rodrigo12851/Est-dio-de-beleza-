@@ -138,6 +138,11 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Produção para formatura com pele glow blindada e esfumado clássico em tons quentes.',
     date: '2026-08-15',
     photo: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: true,
     procedureId: 'proc-4',
   },
@@ -148,6 +153,11 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Contraste suave mantendo a raiz natural com pontos de luz envolventes e pontas seladas.',
     date: '2026-08-14',
     photo: 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: true,
     procedureId: 'proc-3',
   },
@@ -158,6 +168,10 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Alinhamento simétrico respeitando o arqueamento natural do rosto da cliente.',
     date: '2026-08-12',
     photo: 'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1522337094138-09a2abae205a?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: true,
     procedureId: 'proc-5',
   },
@@ -168,6 +182,10 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Alongamento resistente com esmalte em gel renda e traço fino feito à mão.',
     date: '2026-08-11',
     photo: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: true,
     procedureId: 'proc-7',
   },
@@ -178,6 +196,11 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Cabelos sedosos, balanço natural e 100% de alinhamento com hidratação intensa.',
     date: '2026-08-09',
     photo: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: false,
     procedureId: 'proc-2',
   },
@@ -188,6 +211,10 @@ export const initialGalleryWorks: GalleryWork[] = [
     description: 'Preenchimento visual dos fios com efeito volumoso e textura aveludada.',
     date: '2026-08-07',
     photo: 'https://images.unsplash.com/photo-1522337094138-09a2abae205a?auto=format&fit=crop&q=80&w=800',
+    photos: [
+      'https://images.unsplash.com/photo-1522337094138-09a2abae205a?auto=format&fit=crop&q=80&w=800',
+      'https://images.unsplash.com/photo-1583001931096-959e9a1a6223?auto=format&fit=crop&q=80&w=800'
+    ],
     featured: false,
     procedureId: 'proc-6',
   },

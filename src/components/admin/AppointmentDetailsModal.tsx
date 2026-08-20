@@ -51,28 +51,33 @@ const PAYMENT_METHODS: { label: string; value: PaymentMethod }[] = [
 ];
 
 export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({
-  appointment,
+  appointment: initialAppointment,
   onClose,
 }) => {
   const {
     config,
+    appointments,
     updateAppointmentStatus,
     updateAppointmentPayment,
     updateAppointmentDetails,
     markReminderSent,
   } = useSalon();
 
+  // Always resolve the live, updated appointment instance from context state
+  const liveAppointment = appointments.find((a) => a.id === initialAppointment?.id) || initialAppointment;
+
   const [isEditingPayment, setIsEditingPayment] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(appointment?.paymentMethod || 'pix');
-  const [isPaid, setIsPaid] = useState<boolean>(appointment?.isPaid || false);
-  const [discount, setDiscount] = useState<string>(String(appointment?.discount || '0'));
-  const [notes, setNotes] = useState<string>(appointment?.clientNotes || '');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(liveAppointment?.paymentMethod || 'pix');
+  const [isPaid, setIsPaid] = useState<boolean>(liveAppointment?.isPaid || false);
+  const [discount, setDiscount] = useState<string>(String(liveAppointment?.discount || '0'));
+  const [notes, setNotes] = useState<string>(liveAppointment?.clientNotes || '');
   const [isEditingTime, setIsEditingTime] = useState(false);
-  const [editDate, setEditDate] = useState(appointment?.date || '');
-  const [editTime, setEditTime] = useState(appointment?.time || '');
+  const [editDate, setEditDate] = useState(liveAppointment?.date || '');
+  const [editTime, setEditTime] = useState(liveAppointment?.time || '');
   const [errorMsg, setErrorMsg] = useState('');
 
-  if (!appointment) return null;
+  if (!liveAppointment) return null;
+  const appointment = liveAppointment;
 
   const endTime = addMinutesToTime(appointment.time, appointment.durationMinutes);
   const whatsappReminderUrl = buildWhatsAppReminderUrl(appointment, config);

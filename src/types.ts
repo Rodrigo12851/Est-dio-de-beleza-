@@ -22,6 +22,7 @@ export interface GalleryWork {
   description: string;
   date: string;
   photo: string;
+  photos?: string[];
   featured: boolean;
   procedureId?: string;
 }

@@ -17,6 +17,7 @@ import {
   User,
   Coffee
 } from 'lucide-react';
+import { ImageUploadPicker } from '../common/ImageUploadPicker';
 
 const DAYS_NAMES = [
   'Domingo',
@@ -223,14 +224,12 @@ export const AdminSettings: React.FC = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                  Foto de Perfil / Logo (URL da Imagem)
-                </label>
-                <input
-                  type="url"
-                  value={formData.avatar}
-                  onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-xs text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
+                <ImageUploadPicker
+                  label="Foto de Perfil / Logo do Salão"
+                  value={formData.avatar || ''}
+                  onChange={(val) => setFormData({ ...formData, avatar: val })}
+                  placeholder="https://..."
+                  helpText="Escolha uma imagem do seu celular ou informe um link de imagem."
                 />
               </div>
 

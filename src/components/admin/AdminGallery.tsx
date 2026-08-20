@@ -11,8 +11,10 @@ import {
   Calendar,
   X,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Layers
 } from 'lucide-react';
+import { ImageUploadPicker } from '../common/ImageUploadPicker';
 
 const CATEGORIES: ProcedureCategory[] = ['Cabelo', 'Maquiagem', 'Unhas', 'Sobrancelhas', 'Outros'];
 
@@ -27,6 +29,7 @@ export const AdminGallery: React.FC = () => {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(getTodayDateStr());
   const [photo, setPhoto] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
   const [featured, setFeatured] = useState(false);
   const [procedureId, setProcedureId] = useState('');
 
@@ -36,7 +39,9 @@ export const AdminGallery: React.FC = () => {
     setCategory('Maquiagem');
     setDescription('');
     setDate(getTodayDateStr());
-    setPhoto('https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=800');
+    const defaultPhoto = 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=800';
+    setPhoto(defaultPhoto);
+    setPhotos([defaultPhoto]);
     setFeatured(false);
     setProcedureId('');
     setIsModalOpen(true);
@@ -49,6 +54,8 @@ export const AdminGallery: React.FC = () => {
     setDescription(work.description);
     setDate(work.date);
     setPhoto(work.photo);
+    const existingPhotos = work.photos && work.photos.length > 0 ? work.photos : [work.photo];
+    setPhotos(existingPhotos);
     setFeatured(work.featured);
     setProcedureId(work.procedureId || '');
     setIsModalOpen(true);
@@ -62,7 +69,10 @@ export const AdminGallery: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !photo.trim()) return;
+    const finalPhoto = photo.trim() || (photos.length > 0 ? photos[0] : '');
+    if (!title.trim() || !finalPhoto) return;
+
+    const finalPhotos = photos.length > 0 ? photos : [finalPhoto];
 
     const workData: GalleryWork = {
       id: editingWork ? editingWork.id : `gal-${Date.now()}`,
@@ -70,7 +80,8 @@ export const AdminGallery: React.FC = () => {
       category,
       description: description.trim(),
       date,
-      photo: photo.trim(),
+      photo: finalPhoto,
+      photos: finalPhotos,
       featured,
       procedureId: procedureId || undefined,
     };
@@ -121,6 +132,13 @@ export const AdminGallery: React.FC = () => {
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-xs text-[#8E5D52] text-[11px] font-bold px-3 py-1 rounded-full shadow-xs">
                   {work.category}
                 </div>
+
+                {work.photos && work.photos.length > 1 && (
+                  <div className="absolute bottom-3 left-3 bg-[#2D2926]/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 backdrop-blur-xs">
+                    <Layers className="w-3 h-3 text-[#EAE4DD]" />
+                    <span>{work.photos.length} fotos (Slide)</span>
+                  </div>
+                )}
 
                 {work.featured && (
                   <div className="absolute top-3 right-3 bg-[#8E5D52] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs flex items-center gap-1">
@@ -232,16 +250,22 @@ export const AdminGallery: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                  URL da Foto *
-                </label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://..."
+                <ImageUploadPicker
+                  label="Fotos da Publicação (Slide / Carrossel)"
                   value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-xs text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
+                  onChange={(val) => setPhoto(val)}
+                  multiple={true}
+                  values={photos}
+                  onMultipleChange={(newPhotos) => {
+                    setPhotos(newPhotos);
+                    if (newPhotos.length > 0) {
+                      setPhoto(newPhotos[0]);
+                    } else {
+                      setPhoto('');
+                    }
+                  }}
+                  placeholder="https://..."
+                  helpText="Selecione 1 ou mais fotos do seu smartphone/computador. Elas serão exibidas como um carrossel de fotos (slide) para a cliente passar no card!"
                 />
               </div>
 

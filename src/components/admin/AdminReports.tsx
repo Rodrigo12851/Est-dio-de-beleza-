@@ -193,38 +193,80 @@ export const AdminReports: React.FC = () => {
 
       {/* Visual Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Procedure Breakdown Bar Chart */}
+        {/* Procedure Breakdown Bar / Ranking Chart */}
         <div className="bg-white p-6 rounded-3xl border border-[#EAE4DD] shadow-xs space-y-4">
-          <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926]">
-            Procedimentos Mais Realizados
-          </h3>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={procedureStats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F5F2ED" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 10, fill: '#7D756D' }}
-                  interval={0}
-                  angle={-20}
-                  textAnchor="end"
-                />
-                <YAxis tick={{ fontSize: 10, fill: '#7D756D' }} allowDecimals={false} />
-                <Tooltip
-                  formatter={(val: any) => [`${val} atendimentos`, 'Quantidade']}
-                  contentStyle={{ borderRadius: '16px', fontSize: '12px', border: '1px solid #EAE4DD', backgroundColor: '#FDFBF9' }}
-                />
-                <Bar dataKey="count" fill="#8E5D52" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926]">
+              Procedimentos Mais Realizados
+            </h3>
+            <span className="text-[11px] font-bold text-[#8E5D52] bg-[#F5F2ED] px-2.5 py-1 rounded-xl">
+              Ranking por Demanda
+            </span>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            {procedureStats.chartData.map((item, idx) => {
+              const maxCount = Math.max(...procedureStats.chartData.map((d) => d.count), 1);
+              const percentage = Math.round((item.count / maxCount) * 100);
+
+              return (
+                <div key={item.name} className="space-y-1.5 p-3 rounded-2xl bg-[#FDFBF9] border border-[#EAE4DD]/70 hover:border-[#8E5D52]/40 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${
+                        idx === 0 ? 'bg-[#8E5D52] text-white' :
+                        idx === 1 ? 'bg-[#D48D80] text-white' :
+                        idx === 2 ? 'bg-[#C98B2B] text-white' :
+                        'bg-[#EAE4DD] text-[#59524C]'
+                      }`}>
+                        {idx + 1}
+                      </span>
+                      <span className="font-bold text-[#2D2926] break-words">
+                        {item.name}
+                      </span>
+                      <span className="text-[9px] font-semibold text-[#8E5D52] bg-[#F5F2ED] px-1.5 py-0.5 rounded shrink-0">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:justify-end shrink-0 pl-7 sm:pl-0 text-[11px]">
+                      <span className="font-bold text-[#2D2926]">
+                        {item.count} {item.count === 1 ? 'atendimento' : 'atendimentos'}
+                      </span>
+                      <span className="text-[#2F7D48] font-bold">
+                        ({formatCurrency(item.revenue)})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Visual Progress Bar */}
+                  <div className="w-full bg-[#EAE4DD] h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-[#8E5D52] h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(percentage, 8)}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+
+            {procedureStats.chartData.length === 0 && (
+              <p className="text-xs text-[#7D756D] text-center py-8">Nenhum atendimento registrado ainda.</p>
+            )}
           </div>
         </div>
 
         {/* Status Breakdown Pie Chart */}
         <div className="bg-white p-6 rounded-3xl border border-[#EAE4DD] shadow-xs space-y-4">
-          <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926]">
-            Status dos Agendamentos
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926]">
+              Status dos Agendamentos
+            </h3>
+            <span className="text-[11px] font-bold text-[#7D756D] bg-[#FDFBF9] px-2.5 py-1 rounded-xl border border-[#EAE4DD]">
+              Distribuição Geral
+            </span>
+          </div>
+
           <div className="h-64 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

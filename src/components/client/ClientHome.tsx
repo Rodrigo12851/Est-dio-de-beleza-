@@ -14,6 +14,7 @@ import {
   Instagram,
   Heart,
   ChevronRight,
+  ChevronLeft,
   Eye,
   CheckCircle2,
   Scissors,
@@ -22,7 +23,9 @@ import {
   Star,
   Info,
   Filter,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ExternalLink,
+  Layers
 } from 'lucide-react';
 
 interface ClientHomeProps {
@@ -44,6 +47,125 @@ const CATEGORIES: CategoryFilterItem[] = [
   { label: 'Unhas', value: 'Unhas', icon: '💅' },
   { label: 'Sobrancelhas', value: 'Sobrancelhas', icon: '👁️' },
 ];
+
+// Interactive individual Gallery Card Slide component
+const GalleryCardSlide: React.FC<{
+  work: GalleryWork;
+  onOpenZoom: (work: GalleryWork) => void;
+}> = ({ work, onOpenZoom }) => {
+  const photos = work.photos && work.photos.length > 0 ? work.photos : [work.photo];
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSlideIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSlideIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+  };
+
+  return (
+    <motion.div
+      id={`gallery-item-${work.id}`}
+      layout
+      initial={{ opacity: 0, scale: 0.9, y: 15 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: -10 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      className="group relative bg-[#F5F2ED] rounded-2xl sm:rounded-3xl overflow-hidden aspect-square border border-[#EAE4DD] shadow-xs hover:border-[#D48D80] transition-all flex flex-col justify-end select-none"
+    >
+      {/* Background Image of current slide */}
+      <div className="absolute inset-0 cursor-pointer" onClick={() => onOpenZoom(work)}>
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={slideIndex}
+            src={photos[slideIndex] || work.photo}
+            alt={`${work.title} - foto ${slideIndex + 1}`}
+            referrerPolicy="no-referrer"
+            initial={{ opacity: 0.4 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0.4 }}
+            transition={{ duration: 0.25 }}
+            className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-500"
+          />
+        </AnimatePresence>
+      </div>
+
+      {/* Carousel Navigation Arrows if multiple photos */}
+      {photos.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md active:scale-95"
+            title="Foto anterior"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white transition-all opacity-85 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md active:scale-95"
+            title="Próxima foto"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          {/* Dots pagination */}
+          <div className="absolute bottom-16 left-0 right-0 z-20 flex justify-center gap-1">
+            {photos.map((_, idx) => (
+              <span
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  slideIndex === idx ? 'w-4 bg-white shadow-xs' : 'w-1.5 bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Slide count tag */}
+          <div className="absolute top-2 left-2 z-10 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-white/20">
+            <Layers className="w-2.5 h-2.5 text-[#D48D80]" />
+            <span>{slideIndex + 1}/{photos.length}</span>
+          </div>
+        </>
+      )}
+
+      {/* Top Badge: Featured */}
+      {work.featured && (
+        <div className="absolute top-2 sm:top-2.5 right-2 sm:right-2.5 z-10 bg-[#8E5D52] text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-0.5">
+          <Star className="w-2.5 h-2.5 fill-white shrink-0" />
+          <span>Destaque</span>
+        </div>
+      )}
+
+      {/* Gradient Overlay & Details (Click opens lightbox zoom) */}
+      <div
+        className="relative z-10 bg-gradient-to-t from-[#2D2926]/95 via-[#2D2926]/50 to-transparent p-2.5 sm:p-3.5 flex flex-col justify-end text-white pt-8 sm:pt-10 cursor-pointer"
+        onClick={() => onOpenZoom(work)}
+      >
+        <div className="flex items-center justify-between gap-1 mb-0.5">
+          <span className="text-[9px] sm:text-[10px] font-bold text-[#D48D80] uppercase tracking-wider truncate max-w-[120px]">
+            {work.category}
+          </span>
+        </div>
+
+        <h4 className="text-[11px] sm:text-xs font-semibold line-clamp-2 leading-tight break-words">
+          {work.title}
+        </h4>
+
+        <div className="flex items-center gap-1 mt-1 text-[9px] sm:text-[10px] text-[#D8D2CB]">
+          <Eye className="w-3 h-3 shrink-0" />
+          <span className="truncate">Toque para ampliar</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 export const ClientHome: React.FC<ClientHomeProps> = ({
   onOpenBookingWithProcedure,
@@ -95,6 +217,14 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
     `Olá, ${config.ownerName}! 💕 Conheci seu salão pelo site e gostaria de saber mais.`
   );
 
+  const instagramUrl = config.instagram
+    ? config.instagram.startsWith('http')
+      ? config.instagram
+      : `https://instagram.com/${config.instagram.replace('@', '').trim()}`
+    : 'https://instagram.com';
+
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`;
+
   return (
     <div className="min-h-screen pb-24 sm:pb-16 bg-[#FDFBF9] overflow-x-hidden">
       {/* Bento Hero Section */}
@@ -141,7 +271,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             </div>
           </div>
 
-          {/* Side Bento Card: Professional Profile */}
+          {/* Side Bento Card: Professional Profile & Direct Instagram / Map Link */}
           <div className="bg-white rounded-3xl border border-[#EAE4DD] p-5 sm:p-7 flex flex-col justify-between shadow-xs space-y-4">
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -158,7 +288,19 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                   <h3 className="font-['Playfair_Display',serif] text-base sm:text-lg font-bold text-[#2D2926] truncate">
                     {config.ownerName}
                   </h3>
-                  <p className="text-xs text-[#7D756D] truncate">{config.instagram || '@studiobella'}</p>
+                  
+                  {/* Clickable Instagram Link */}
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-[#8E5D52] hover:text-[#784D43] font-semibold transition-colors mt-0.5 truncate max-w-full group"
+                    title="Abrir perfil no Instagram"
+                  >
+                    <Instagram className="w-3.5 h-3.5 text-[#E1306C] shrink-0" />
+                    <span className="truncate">{config.instagram || '@studiobella'}</span>
+                    <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </a>
                 </div>
               </div>
 
@@ -167,11 +309,18 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
               </p>
             </div>
 
+            {/* Location & Open status */}
             <div className="pt-3.5 border-t border-[#F0EAE4] flex items-center justify-between text-xs text-[#7D756D] gap-2">
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <MapPin className="w-3.5 h-3.5 text-[#8E5D52] shrink-0" />
-                <span className="truncate">{config.address.split(',')[0]}</span>
-              </div>
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 min-w-0 flex-1 hover:text-[#8E5D52] transition-colors group"
+                title="Ver endereço no Google Maps"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#8E5D52] shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="truncate font-medium">{config.address.split(',')[0]}</span>
+              </a>
               <span className="text-emerald-700 text-[11px] font-bold bg-[#EAF5EC] px-2.5 py-1 rounded-full border border-[#C2E4C9] shrink-0 whitespace-nowrap">
                 Aberto hoje
               </span>
@@ -322,7 +471,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
           )}
         </section>
 
-        {/* Galeria de Trabalhos / Portfólio Section with Animated Category Filter Chips */}
+        {/* Galeria de Trabalhos / Portfólio Section with Interactive Slide and Animated Category Filter Chips */}
         <section id="galeria-section" className="space-y-5 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5 border-b border-[#EAE4DD] pb-3.5">
             <div>
@@ -331,7 +480,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                 <span className="text-[#8E5D52] text-lg sm:text-xl">📸</span>
               </h2>
               <p className="text-xs sm:text-sm text-[#7D756D] mt-0.5">
-                Fotos reais dos resultados realizados no nosso salão • Filtre por categoria abaixo
+                Fotos reais dos resultados realizados no nosso salão • Passe o slide nos cards para conferir todos os ângulos
               </p>
             </div>
           </div>
@@ -376,59 +525,18 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             })}
           </div>
 
-          {/* Gallery Grid with Fluid Animated Transitions */}
+          {/* Gallery Grid with Interactive Multi-Photo Card Slides */}
           <motion.div
             layout
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4.5"
           >
             <AnimatePresence mode="popLayout">
               {filteredGallery.map((work) => (
-                <motion.div
+                <GalleryCardSlide
                   key={work.id}
-                  id={`gallery-item-${work.id}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: -10 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                  onClick={() => onOpenGalleryZoom(work)}
-                  whileHover={{ y: -4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="group relative bg-[#F5F2ED] rounded-2xl sm:rounded-3xl overflow-hidden aspect-square border border-[#EAE4DD] shadow-xs cursor-pointer hover:border-[#D48D80] transition-all flex flex-col justify-end"
-                >
-                  <img
-                    src={work.photo}
-                    alt={work.title}
-                    referrerPolicy="no-referrer"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-106 transition-transform duration-500"
-                  />
-
-                  {/* Gradient Overlay for crystal clear title & details on both mobile and desktop */}
-                  <div className="relative z-10 bg-gradient-to-t from-[#2D2926]/95 via-[#2D2926]/50 to-transparent p-2.5 sm:p-3.5 flex flex-col justify-end text-white pt-8 sm:pt-10">
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className="text-[9px] sm:text-[10px] font-bold text-[#D48D80] uppercase tracking-wider truncate max-w-[120px]">
-                        {work.category}
-                      </span>
-                    </div>
-
-                    <h4 className="text-[11px] sm:text-xs font-semibold line-clamp-2 leading-tight break-words">
-                      {work.title}
-                    </h4>
-
-                    <div className="flex items-center gap-1 mt-1 text-[9px] sm:text-[10px] text-[#D8D2CB]">
-                      <Eye className="w-3 h-3 shrink-0" />
-                      <span className="truncate">Toque para ampliar</span>
-                    </div>
-                  </div>
-
-                  {/* Top Badge: Featured */}
-                  {work.featured && (
-                    <div className="absolute top-2 sm:top-2.5 right-2 sm:right-2.5 z-10 bg-[#8E5D52] text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-0.5">
-                      <Star className="w-2.5 h-2.5 fill-white shrink-0" />
-                      <span>Destaque</span>
-                    </div>
-                  )}
-                </motion.div>
+                  work={work}
+                  onOpenZoom={onOpenGalleryZoom}
+                />
               ))}
             </AnimatePresence>
           </motion.div>
@@ -446,7 +554,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
           )}
         </section>
 
-        {/* Sobre & Localização Section */}
+        {/* Sobre & Localização Section (with direct Google Maps and Instagram links) */}
         <section id="sobre-section" className="bg-white rounded-3xl border border-[#EAE4DD] p-5 sm:p-8 lg:p-9 shadow-xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Bio & Owner */}
@@ -467,6 +575,20 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                 <p className="text-xs text-[#59524C] mt-2.5 leading-relaxed break-words">
                   {config.bio}
                 </p>
+
+                {/* Direct Instagram Profile Link */}
+                <div className="pt-3">
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#FDEDED]/70 hover:bg-[#FCE3DF] border border-[#F5C2BA] text-[#8E5D52] rounded-xl text-xs font-bold transition-colors"
+                  >
+                    <Instagram className="w-4 h-4 text-[#E1306C]" />
+                    <span>Ver Trabalhos no Instagram</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-75" />
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -477,18 +599,36 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                 <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[#8E5D52] shrink-0 mt-0.5" />
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-[#2D2926] uppercase tracking-wider">Endereço</h4>
+                    <h4 className="text-xs font-bold text-[#2D2926] uppercase tracking-wider">Localização & Endereço</h4>
                     <p className="text-xs text-[#59524C] mt-1 leading-relaxed break-words">{config.address}</p>
+                    
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-2 text-xs font-bold text-[#8E5D52] hover:text-[#784D43] underline transition-colors"
+                    >
+                      <span>Abrir no Google Maps</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
                   <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-[#8E5D52] shrink-0 mt-0.5" />
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-[#2D2926] uppercase tracking-wider">Contato</h4>
+                    <h4 className="text-xs font-bold text-[#2D2926] uppercase tracking-wider">Contato & WhatsApp</h4>
                     <p className="text-xs text-[#59524C] mt-1 truncate">{config.phone}</p>
                     {config.instagram && (
-                      <p className="text-xs text-[#8E5D52] font-semibold truncate">{config.instagram}</p>
+                      <a
+                        href={instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-[#8E5D52] font-semibold hover:underline mt-0.5 truncate"
+                      >
+                        <Instagram className="w-3 h-3 text-[#E1306C]" />
+                        <span>{config.instagram}</span>
+                      </a>
                     )}
                   </div>
                 </div>

@@ -15,6 +15,7 @@ import {
   X,
   Sparkles
 } from 'lucide-react';
+import { ImageUploadPicker } from '../common/ImageUploadPicker';
 
 const CATEGORIES: ProcedureCategory[] = ['Cabelo', 'Maquiagem', 'Unhas', 'Sobrancelhas', 'Outros'];
 
@@ -280,15 +281,12 @@ export const AdminProcedures: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                  Foto de Capa (URL da Imagem)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
+                <ImageUploadPicker
+                  label="Foto do Procedimento"
                   value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-xs text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
+                  onChange={(val) => setPhoto(val)}
+                  placeholder="https://..."
+                  helpText="Escolha uma imagem do procedimento da galeria do celular ou cole uma URL."
                 />
               </div>
 
