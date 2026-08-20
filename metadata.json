@@ -1,0 +1,6 @@
+{
+  "name": "Studio Bella - Agendamento & Gestão",
+  "description": "Sistema completo de agendamento online e gestão para salão de beleza com controle de horários inteligentes, confirmações por WhatsApp e financeiro.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
