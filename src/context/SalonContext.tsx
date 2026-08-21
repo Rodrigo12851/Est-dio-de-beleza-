@@ -27,6 +27,26 @@ import {
 } from '../utils/dateUtils';
 import { cleanPhone } from '../utils/whatsappUtils';
 import { notificationSound } from '../utils/audioNotification';
+import {
+  subscribeToSalonConfig,
+  saveSalonConfigToDb,
+  subscribeToProcedures,
+  saveProcedureToDb,
+  deleteProcedureFromDb,
+  subscribeToGallery,
+  saveGalleryWorkToDb,
+  deleteGalleryWorkFromDb,
+  subscribeToAppointments,
+  saveAppointmentToDb,
+  updateAppointmentInDb,
+  deleteAppointmentFromDb,
+  subscribeToBlockedSlots,
+  saveBlockedSlotToDb,
+  deleteBlockedSlotFromDb,
+  subscribeToClients,
+  saveClientToDb,
+  resetAllDataInDb,
+} from '../services/firestoreService';
 
 interface SalonContextType {
   // Data
@@ -160,6 +180,60 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const clearNotification = () => setLastCreatedAppointment(null);
   const playNotificationSound = () => notificationSound.playBookingRingtone();
 
+  // Firestore Real-Time Synchronizations
+  useEffect(() => {
+    const unsubConfig = subscribeToSalonConfig((data) => {
+      if (data) {
+        setConfig(data);
+        localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(data));
+      }
+    });
+
+    const unsubProcedures = subscribeToProcedures((data) => {
+      if (data && data.length > 0) {
+        setProcedures(data);
+        localStorage.setItem(STORAGE_KEYS.PROCEDURES, JSON.stringify(data));
+      }
+    });
+
+    const unsubGallery = subscribeToGallery((data) => {
+      if (data && data.length > 0) {
+        setGallery(data);
+        localStorage.setItem(STORAGE_KEYS.GALLERY, JSON.stringify(data));
+      }
+    });
+
+    const unsubAppointments = subscribeToAppointments((data) => {
+      if (data) {
+        setAppointments(data);
+        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(data));
+      }
+    });
+
+    const unsubBlockedSlots = subscribeToBlockedSlots((data) => {
+      if (data) {
+        setBlockedSlots(data);
+        localStorage.setItem(STORAGE_KEYS.BLOCKED_SLOTS, JSON.stringify(data));
+      }
+    });
+
+    const unsubClients = subscribeToClients((data) => {
+      if (data) {
+        setClients(data);
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(data));
+      }
+    });
+
+    return () => {
+      unsubConfig();
+      unsubProcedures();
+      unsubGallery();
+      unsubAppointments();
+      unsubBlockedSlots();
+      unsubClients();
+    };
+  }, []);
+
   // Clean up any legacy localStorage keys that may have stored admin view
   useEffect(() => {
     try {
@@ -169,31 +243,6 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // ignore
     }
   }, []);
-
-  // Persistence effects
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
-  }, [config]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.PROCEDURES, JSON.stringify(procedures));
-  }, [procedures]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.GALLERY, JSON.stringify(gallery));
-  }, [gallery]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-  }, [appointments]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.BLOCKED_SLOTS, JSON.stringify(blockedSlots));
-  }, [blockedSlots]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
-  }, [clients]);
 
   useEffect(() => {
     try {
@@ -364,11 +413,12 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const cleanP = cleanPhone(phone);
     if (!name || !cleanP) return;
 
-    setClients((prev) => {
-      const existing = prev.find((c) => cleanPhone(c.phone) === cleanP);
-      if (existing) {
-        return prev.map((c) => (c.id === existing.id ? { ...c, name } : c));
-      }
+    const existing = clients.find((c) => cleanPhone(c.phone) === cleanP);
+    if (existing) {
+      const updated = { ...existing, name };
+      setClients((prev) => prev.map((c) => (c.id === existing.id ? updated : c)));
+      saveClientToDb(updated).catch(console.error);
+    } else {
       const newClient: ClientProfile = {
         id: `cli-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         name,
@@ -376,8 +426,9 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         notes: initialNote,
         createdAt: getTodayDateStr(),
       };
-      return [...prev, newClient];
-    });
+      setClients((prev) => [...prev, newClient]);
+      saveClientToDb(newClient).catch(console.error);
+    }
   };
 
   // Create appointment
@@ -397,7 +448,8 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       reminderSent: false,
     };
 
-    setAppointments((prev) => [...prev, newAppointment]);
+    setAppointments((prev) => [newAppointment, ...prev]);
+    saveAppointmentToDb(newAppointment).catch(console.error);
     syncClientProfile(data.clientName, data.clientPhone, data.clientNotes);
 
     // Play ringing sound & trigger notifications for owner
@@ -418,20 +470,18 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Update appointment status
   const updateAppointmentStatus = (id: string, status: AppointmentStatus, paymentMethod?: PaymentMethod) => {
+    const existing = appointments.find((a) => a.id === id);
+    const isPaid = status === 'concluido' ? true : existing?.isPaid || false;
+    const updates: Partial<Appointment> = {
+      status,
+      isPaid,
+      ...(paymentMethod ? { paymentMethod } : {}),
+    };
+
     setAppointments((prev) =>
-      prev.map((apt) => {
-        if (apt.id === id) {
-          const isPaid = status === 'concluido' ? true : apt.isPaid;
-          return {
-            ...apt,
-            status,
-            paymentMethod: paymentMethod || apt.paymentMethod,
-            isPaid,
-          };
-        }
-        return apt;
-      })
+      prev.map((apt) => (apt.id === id ? { ...apt, ...updates } : apt))
     );
+    updateAppointmentInDb(id, updates).catch(console.error);
   };
 
   // Update appointment payment info
@@ -442,22 +492,23 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     discount?: number,
     finalPrice?: number
   ) => {
+    const existing = appointments.find((a) => a.id === id);
+    if (!existing) return;
+
+    const updatedDiscount = discount !== undefined ? discount : existing.discount;
+    const updatedFinalPrice = finalPrice !== undefined ? finalPrice : existing.price - updatedDiscount;
+
+    const updates: Partial<Appointment> = {
+      isPaid,
+      discount: updatedDiscount,
+      finalPrice: updatedFinalPrice,
+      ...(paymentMethod ? { paymentMethod } : {}),
+    };
+
     setAppointments((prev) =>
-      prev.map((apt) => {
-        if (apt.id === id) {
-          const updatedDiscount = discount !== undefined ? discount : apt.discount;
-          const updatedFinalPrice = finalPrice !== undefined ? finalPrice : apt.price - updatedDiscount;
-          return {
-            ...apt,
-            isPaid,
-            paymentMethod: paymentMethod || apt.paymentMethod,
-            discount: updatedDiscount,
-            finalPrice: updatedFinalPrice,
-          };
-        }
-        return apt;
-      })
+      prev.map((apt) => (apt.id === id ? { ...apt, ...updates } : apt))
     );
+    updateAppointmentInDb(id, updates).catch(console.error);
   };
 
   // Update appointment details
@@ -479,17 +530,15 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
+    const price = updates.price !== undefined ? updates.price : existing.price;
+    const discount = updates.discount !== undefined ? updates.discount : existing.discount;
+    const finalPrice = updates.finalPrice !== undefined ? updates.finalPrice : price - discount;
+    const fullUpdates = { ...updates, finalPrice };
+
     setAppointments((prev) =>
-      prev.map((apt) => {
-        if (apt.id === id) {
-          const price = updates.price !== undefined ? updates.price : apt.price;
-          const discount = updates.discount !== undefined ? updates.discount : apt.discount;
-          const finalPrice = updates.finalPrice !== undefined ? updates.finalPrice : price - discount;
-          return { ...apt, ...updates, finalPrice };
-        }
-        return apt;
-      })
+      prev.map((apt) => (apt.id === id ? { ...apt, ...fullUpdates } : apt))
     );
+    updateAppointmentInDb(id, fullUpdates).catch(console.error);
 
     return { success: true };
   };
@@ -504,6 +553,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAppointments((prev) =>
       prev.map((apt) => (apt.id === id ? { ...apt, reminderSent: true } : apt))
     );
+    updateAppointmentInDb(id, { reminderSent: true }).catch(console.error);
   };
 
   // Procedures CRUD
@@ -517,10 +567,12 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return [...prev, procedure];
     });
+    saveProcedureToDb(procedure).catch(console.error);
   };
 
   const deleteProcedure = (id: string) => {
     setProcedures((prev) => prev.filter((p) => p.id !== id));
+    deleteProcedureFromDb(id).catch(console.error);
   };
 
   // Gallery CRUD
@@ -534,10 +586,12 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       return [work, ...prev];
     });
+    saveGalleryWorkToDb(work).catch(console.error);
   };
 
   const deleteGalleryWork = (id: string) => {
     setGallery((prev) => prev.filter((g) => g.id !== id));
+    deleteGalleryWorkFromDb(id).catch(console.error);
   };
 
   // Blocked slots CRUD
@@ -547,22 +601,29 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: `blk-${Date.now()}`,
     };
     setBlockedSlots((prev) => [...prev, newSlot]);
+    saveBlockedSlotToDb(newSlot).catch(console.error);
   };
 
   const deleteBlockedSlot = (id: string) => {
     setBlockedSlots((prev) => prev.filter((b) => b.id !== id));
+    deleteBlockedSlotFromDb(id).catch(console.error);
   };
 
   // Clients
   const saveClientNotes = (clientId: string, notes: string) => {
-    setClients((prev) =>
-      prev.map((c) => (c.id === clientId ? { ...c, notes } : c))
-    );
+    const target = clients.find((c) => c.id === clientId);
+    if (target) {
+      const updated = { ...target, notes };
+      setClients((prev) => prev.map((c) => (c.id === clientId ? updated : c)));
+      saveClientToDb(updated).catch(console.error);
+    }
   };
 
   // Salon Config
   const updateSalonConfig = (newConfig: Partial<SalonConfig>) => {
-    setConfig((prev) => ({ ...prev, ...newConfig }));
+    const updated = { ...config, ...newConfig };
+    setConfig(updated);
+    saveSalonConfigToDb(updated).catch(console.error);
   };
 
   const resetToSampleData = () => {
@@ -573,6 +634,7 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setBlockedSlots(initialBlockedSlots);
     setClients(initialClients);
     localStorage.clear();
+    resetAllDataInDb().catch(console.error);
   };
 
   return (

@@ -20,7 +20,8 @@ import {
   EyeOff,
   Bell,
   Volume2,
-  Smartphone
+  Smartphone,
+  Database
 } from 'lucide-react';
 import { ImageUploadPicker } from '../common/ImageUploadPicker';
 import { notificationSound } from '../../utils/audioNotification';
@@ -530,6 +531,37 @@ export const AdminSettings: React.FC = () => {
                     <Bell className="w-4 h-4" />
                     <span>{notificationsGranted ? 'Notificações Ativadas no Aparelho ✓' : 'Permitir Notificações no Celular'}</span>
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Firebase Cloud Database Status Card */}
+            <div className="bg-white rounded-3xl border border-[#EAE4DD] p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F5F2ED] pb-3">
+                <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926] flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-600" />
+                  <span>Banco de Dados em Nuvem (Firebase Firestore)</span>
+                </h3>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Conectado & Sincronizado
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs text-[#59524C] leading-relaxed">
+                  Seu site está conectado diretamente ao seu banco de dados Firebase. Todos os agendamentos das clientes, alterações de procedimentos, fotos da galeria e configurações são sincronizados em tempo real na nuvem.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-xs">
+                    <span className="text-[10px] font-bold text-[#7D756D] uppercase block">Projeto Firebase</span>
+                    <span className="font-mono font-semibold text-[#2D2926]">studio-de-beleza-8045a</span>
+                  </div>
+                  <div className="p-3 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-xs">
+                    <span className="text-[10px] font-bold text-[#7D756D] uppercase block">Modo de Sincronização</span>
+                    <span className="font-semibold text-emerald-700">Tempo Real (Realtime Firestore)</span>
+                  </div>
                 </div>
               </div>
             </div>

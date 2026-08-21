@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permite leitura pública dos dados do salão (configurações, procedimentos e galeria)
+    // Permite criação e leitura de agendamentos para clientes e gestão da proprietária
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

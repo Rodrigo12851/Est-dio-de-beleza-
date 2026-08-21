@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "salon_config": {
+      "title": "Salon Configuration",
+      "description": "Studio settings, owner details, working hours, and policies",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "instagram": { "type": "string" },
+        "address": { "type": "string" },
+        "adminPin": { "type": "string" },
+        "cancellationPolicy": { "type": "string" },
+        "workingHours": { "type": "object" },
+        "customDaysOff": { "type": "array" }
+      },
+      "required": ["name", "ownerName", "phone", "whatsapp", "address"]
+    },
+    "procedures": {
+      "title": "Procedures",
+      "description": "Salon services and procedures catalogue",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "price": { "type": "number" },
+        "description": { "type": "string" },
+        "photo": { "type": "string" },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "category", "durationMinutes", "price", "active"]
+    },
+    "appointments": {
+      "title": "Appointments",
+      "description": "Salon bookings and reservations",
+      "type": "object",
+      "properties": {
+        "clientName": { "type": "string" },
+        "clientPhone": { "type": "string" },
+        "clientNotes": { "type": "string" },
+        "procedureId": { "type": "string" },
+        "procedureName": { "type": "string" },
+        "procedureCategory": { "type": "string" },
+        "procedureIds": { "type": "array" },
+        "procedures": { "type": "array" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "durationMinutes": { "type": "number" },
+        "price": { "type": "number" },
+        "discount": { "type": "number" },
+        "finalPrice": { "type": "number" },
+        "status": { "type": "string" },
+        "isPaid": { "type": "boolean" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["clientName", "clientPhone", "date", "time", "durationMinutes", "price", "status"]
+    },
+    "blocked_slots": {
+      "title": "Blocked Slots",
+      "description": "Custom blocked times and slots in the salon calendar",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "required": ["date", "startTime", "endTime"]
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Client directory and history",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "notes": { "type": "string" },
+        "totalAppointments": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "lastVisit": { "type": "string" }
+      },
+      "required": ["name", "phone"]
+    },
+    "gallery": {
+      "title": "Gallery",
+      "description": "Portfolio work photos",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "photo": { "type": "string" },
+        "photos": { "type": "array" },
+        "featured": { "type": "boolean" },
+        "date": { "type": "string" }
+      },
+      "required": ["title", "category", "photo"]
+    }
+  }
+}

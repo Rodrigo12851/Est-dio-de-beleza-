@@ -24,15 +24,13 @@ import {
   Filter,
   Image as ImageIcon,
   ExternalLink,
-  Layers,
-  Lock
+  Layers
 } from 'lucide-react';
 
 interface ClientHomeProps {
   onOpenBookingWithProcedure: (procedure?: Procedure) => void;
   onOpenProcedureDetails: (procedure: Procedure) => void;
   onOpenGalleryZoom: (work: GalleryWork) => void;
-  onOpenAdminLogin?: () => void;
 }
 
 interface CategoryFilterItem {
@@ -159,7 +157,6 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
   onOpenBookingWithProcedure,
   onOpenProcedureDetails,
   onOpenGalleryZoom,
-  onOpenAdminLogin,
 }) => {
   const { config, procedures, gallery } = useSalon();
   const [selectedCategory, setSelectedCategory] = useState<ProcedureCategory | 'Todos'>('Todos');
@@ -636,20 +633,6 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             <p className="text-[11px] text-[#A8A099] mt-0.5">
               Todos os direitos reservados • Atendimento com horário marcado
             </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {onOpenAdminLogin && (
-              <button
-                type="button"
-                onClick={onOpenAdminLogin}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8E5D52] hover:text-[#784D43] transition-colors p-1.5 rounded-lg hover:bg-[#EAE4DD]/60 cursor-pointer"
-                title="Acesso exclusivo da profissional"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span>Área da Profissional</span>
-              </button>
-            )}
           </div>
         </div>
       </footer>

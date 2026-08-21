@@ -101,7 +101,6 @@ const MainApp: React.FC = () => {
             onOpenBookingWithProcedure={handleStartBooking}
             onOpenProcedureDetails={handleOpenProcedureDetail}
             onOpenGalleryZoom={handleOpenGalleryLightbox}
-            onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
           />
 
           {/* 5-Step Booking Flow Modal */}
