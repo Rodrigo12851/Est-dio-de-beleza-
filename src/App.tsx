@@ -75,8 +75,8 @@ const MainApp: React.FC = () => {
         onViewAppointment={handleViewNotificationAppointment}
       />
 
-      {/* ADMIN VIEW */}
-      {viewMode === 'admin' ? (
+      {/* ADMIN VIEW - STRICTLY PROTECTED BY PIN AUTHENTICATION */}
+      {viewMode === 'admin' && isAdminAuthenticated ? (
         <AdminLayout>
           {adminTab === 'dashboard' && <AdminDashboard />}
           {adminTab === 'calendar' && <AdminCalendar />}
@@ -88,7 +88,7 @@ const MainApp: React.FC = () => {
           {adminTab === 'settings' && <AdminSettings />}
         </AdminLayout>
       ) : (
-        /* CLIENT VIEW */
+        /* PUBLIC CLIENT VIEW - ALWAYS DEFAULT FOR VISITORS AND SHARED LINKS */
         <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#EAE4DD] selection:text-[#8E5D52]">
           {/* Client Header Navbar */}
           <ClientNavbar
@@ -101,6 +101,7 @@ const MainApp: React.FC = () => {
             onOpenBookingWithProcedure={handleStartBooking}
             onOpenProcedureDetails={handleOpenProcedureDetail}
             onOpenGalleryZoom={handleOpenGalleryLightbox}
+            onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
           />
 
           {/* 5-Step Booking Flow Modal */}

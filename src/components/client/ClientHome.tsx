@@ -24,13 +24,15 @@ import {
   Filter,
   Image as ImageIcon,
   ExternalLink,
-  Layers
+  Layers,
+  Lock
 } from 'lucide-react';
 
 interface ClientHomeProps {
   onOpenBookingWithProcedure: (procedure?: Procedure) => void;
   onOpenProcedureDetails: (procedure: Procedure) => void;
   onOpenGalleryZoom: (work: GalleryWork) => void;
+  onOpenAdminLogin?: () => void;
 }
 
 interface CategoryFilterItem {
@@ -157,6 +159,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
   onOpenBookingWithProcedure,
   onOpenProcedureDetails,
   onOpenGalleryZoom,
+  onOpenAdminLogin,
 }) => {
   const { config, procedures, gallery } = useSalon();
   const [selectedCategory, setSelectedCategory] = useState<ProcedureCategory | 'Todos'>('Todos');
@@ -622,6 +625,34 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
           </div>
         </section>
       </div>
+
+      {/* Public Footer */}
+      <footer className="mt-12 pt-8 pb-16 sm:pb-8 border-t border-[#EAE4DD] bg-[#F9F6F2] text-[#7D756D] text-xs">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div>
+            <p className="font-bold text-[#2D2926] text-sm font-['Playfair_Display',serif]">
+              {config.name}
+            </p>
+            <p className="text-[11px] text-[#A8A099] mt-0.5">
+              Todos os direitos reservados • Atendimento com horário marcado
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {onOpenAdminLogin && (
+              <button
+                type="button"
+                onClick={onOpenAdminLogin}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8E5D52] hover:text-[#784D43] transition-colors p-1.5 rounded-lg hover:bg-[#EAE4DD]/60 cursor-pointer"
+                title="Acesso exclusivo da profissional"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>Área da Profissional</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </footer>
 
       {/* Floating Mobile Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-30 p-2.5 sm:hidden bg-white/95 backdrop-blur-md border-t border-[#EAE4DD] shadow-lg">

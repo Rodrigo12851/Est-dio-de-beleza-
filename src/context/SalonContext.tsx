@@ -93,8 +93,7 @@ const STORAGE_KEYS = {
   APPOINTMENTS: 'bellastudio_appointments',
   BLOCKED_SLOTS: 'bellastudio_blocked_slots',
   CLIENTS: 'bellastudio_clients',
-  ADMIN_AUTH: 'bellastudio_admin_auth',
-  VIEW_MODE: 'bellastudio_view_mode',
+  ADMIN_AUTH_SESSION: 'bellastudio_admin_session_auth',
   ADMIN_TAB: 'bellastudio_admin_tab',
 };
 
@@ -130,14 +129,25 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : initialClients;
   });
 
+  // Admin authentication is strictly session-bound and NEVER exposed in public link sharing
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+    try {
+      return sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH_SESSION) === 'true';
+    } catch {
+      return false;
+    }
   });
 
-  const [viewMode, setViewMode] = useState<'client' | 'admin'>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.VIEW_MODE);
-    return saved === 'admin' || saved === 'client' ? saved : 'client';
-  });
+  // Always default to public client view when loading or opening any shared link
+  const [viewMode, setViewModeState] = useState<'client' | 'admin'>('client');
+
+  const setViewMode = (mode: 'client' | 'admin') => {
+    if (mode === 'admin' && !isAdminAuthenticated) {
+      setViewModeState('client');
+      return;
+    }
+    setViewModeState(mode);
+  };
 
   const [adminTab, setAdminTab] = useState<'dashboard' | 'calendar' | 'clients' | 'procedures' | 'gallery' | 'financial' | 'reports' | 'settings'>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.ADMIN_TAB);
@@ -149,6 +159,16 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const clearNotification = () => setLastCreatedAppointment(null);
   const playNotificationSound = () => notificationSound.playBookingRingtone();
+
+  // Clean up any legacy localStorage keys that may have stored admin view
+  useEffect(() => {
+    try {
+      localStorage.removeItem('bellastudio_view_mode');
+      localStorage.removeItem('bellastudio_admin_auth');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Persistence effects
   useEffect(() => {
@@ -176,12 +196,16 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [clients]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, String(isAdminAuthenticated));
+    try {
+      if (isAdminAuthenticated) {
+        sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH_SESSION, 'true');
+      } else {
+        sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH_SESSION);
+      }
+    } catch {
+      // ignore
+    }
   }, [isAdminAuthenticated]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
-  }, [viewMode]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ADMIN_TAB, adminTab);
@@ -191,6 +215,12 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loginAdmin = (pin: string): boolean => {
     if (pin === config.adminPin || pin === '1234') {
       setIsAdminAuthenticated(true);
+      setViewModeState('admin');
+      try {
+        sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH_SESSION, 'true');
+      } catch {
+        // ignore
+      }
       return true;
     }
     return false;
@@ -198,7 +228,14 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const logoutAdmin = () => {
     setIsAdminAuthenticated(false);
-    setViewMode('client');
+    setViewModeState('client');
+    try {
+      sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH_SESSION);
+      localStorage.removeItem('bellastudio_view_mode');
+      localStorage.removeItem('bellastudio_admin_auth');
+    } catch {
+      // ignore
+    }
   };
 
   // Helper: check if a date is generally working (not off, not holiday, schedule enabled)
