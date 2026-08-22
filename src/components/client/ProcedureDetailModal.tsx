@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSalon } from '../../context/SalonContext';
 import { Procedure, GalleryWork } from '../../types';
-import { formatCurrency, formatTimeFriendly } from '../../utils/dateUtils';
+import { formatCurrency, formatPriceOrConsult, formatTimeFriendly } from '../../utils/dateUtils';
+import { getSafeImageUrl, DEFAULT_PROCEDURE_PHOTO, DEFAULT_GALLERY_PHOTO } from '../../utils/imageUtils';
 import { X, Clock, Sparkles, CheckCircle2, ChevronRight, Calendar } from 'lucide-react';
 
 interface ProcedureDetailModalProps {
@@ -32,7 +33,7 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
         {/* Header photo banner */}
         <div className="relative h-56 w-full bg-[#2D2926]">
           <img
-            src={procedure.photo}
+            src={getSafeImageUrl(procedure.photo, DEFAULT_PROCEDURE_PHOTO)}
             alt={procedure.name}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
@@ -82,8 +83,8 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
               </div>
               <div>
                 <span className="text-[11px] text-[#7D756D] block">Investimento</span>
-                <span className="text-base font-extrabold text-[#8E5D52]">
-                  {formatCurrency(procedure.price)}
+                <span className={`block ${procedure.price && procedure.price > 0 ? 'text-base font-extrabold text-[#8E5D52]' : 'text-sm font-bold text-[#8E5D52]'}`}>
+                  {formatPriceOrConsult(procedure.price, 'Sob consulta')}
                 </span>
               </div>
             </div>
@@ -114,7 +115,7 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
                     className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group border border-[#EAE4DD]"
                   >
                     <img
-                      src={work.photo}
+                      src={getSafeImageUrl(work.photo, DEFAULT_GALLERY_PHOTO)}
                       alt={work.title}
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
@@ -131,8 +132,8 @@ export const ProcedureDetailModal: React.FC<ProcedureDetailModalProps> = ({
         <div className="p-4 sm:p-5 border-t border-[#EAE4DD] bg-[#FDFBF9] flex items-center justify-between gap-4">
           <div>
             <span className="text-[11px] text-[#7D756D] block">Total</span>
-            <span className="text-lg font-extrabold text-[#2D2926]">
-              {formatCurrency(procedure.price)}
+            <span className={`block ${procedure.price && procedure.price > 0 ? 'text-lg font-extrabold text-[#2D2926]' : 'text-sm font-bold text-[#8E5D52]'}`}>
+              {formatPriceOrConsult(procedure.price, 'Sob consulta')}
             </span>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import {
   Procedure,
   GalleryWork,
@@ -180,6 +180,10 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const clearNotification = () => setLastCreatedAppointment(null);
   const playNotificationSound = () => notificationSound.playBookingRingtone();
 
+  // Track known appointments to identify new ones arriving in real-time from clients
+  const knownAptIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef<boolean>(true);
+
   // Firestore Real-Time Synchronizations
   useEffect(() => {
     const unsubConfig = subscribeToSalonConfig((data) => {
@@ -205,6 +209,27 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const unsubAppointments = subscribeToAppointments((data) => {
       if (data) {
+        // Detect newly arrived appointment in real-time
+        if (!isFirstLoadRef.current && knownAptIdsRef.current.size > 0) {
+          const newApts = data.filter((a) => !knownAptIdsRef.current.has(a.id));
+          if (newApts.length > 0) {
+            const newest = newApts[0];
+            // Trigger sound, vibration and native top status bar notification on phone
+            notificationSound.playBookingRingtone();
+            notificationSound.showSystemNotification(
+              'Novo Agendamento! 💕 Studio Bella',
+              `${newest.clientName} agendou ${newest.procedureName} para ${formatDateBR(newest.date)} às ${newest.time} (R$ ${newest.finalPrice.toFixed(2).replace('.', ',')})`,
+              '/icon.svg',
+              { appointmentId: newest.id }
+            );
+            setLastCreatedAppointment(newest);
+          }
+        }
+
+        // Update known IDs
+        data.forEach((a) => knownAptIdsRef.current.add(a.id));
+        isFirstLoadRef.current = false;
+
         setAppointments(data);
         localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(data));
       }

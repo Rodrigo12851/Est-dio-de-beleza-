@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { NewManualAppointmentModal } from './NewManualAppointmentModal';
 import { BlockTimeModal } from './BlockTimeModal';
+import { getSafeImageUrl, DEFAULT_AVATAR } from '../../utils/imageUtils';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -74,8 +75,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#8E5D52] text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-sm overflow-hidden border border-[#D48D80] shrink-0">
-                {config.avatar ? (
-                  <img src={config.avatar} alt={config.ownerName} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                {config.avatar && config.avatar.trim() ? (
+                  <img src={getSafeImageUrl(config.avatar, DEFAULT_AVATAR)} alt={config.ownerName} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 ) : (
                   <span>B</span>
                 )}

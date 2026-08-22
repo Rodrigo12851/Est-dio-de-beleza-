@@ -21,10 +21,12 @@ import {
   Bell,
   Volume2,
   Smartphone,
-  Database
+  Database,
+  Calendar
 } from 'lucide-react';
 import { ImageUploadPicker } from '../common/ImageUploadPicker';
 import { notificationSound } from '../../utils/audioNotification';
+import { GoogleCalendarSyncSettings } from './GoogleCalendarSyncSettings';
 
 const DAYS_NAMES = [
   'Domingo',
@@ -42,7 +44,7 @@ export const AdminSettings: React.FC = () => {
   // Local state initialized with current config
   const [formData, setFormData] = useState<SalonConfig>(config);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'hours' | 'whatsapp' | 'security'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'hours' | 'whatsapp' | 'google-calendar' | 'security'>('profile');
   const [showPin, setShowPin] = useState(false);
   const [testedSound, setTestedSound] = useState(false);
   const [notificationsGranted, setNotificationsGranted] = useState(false);
@@ -60,13 +62,33 @@ export const AdminSettings: React.FC = () => {
     setTimeout(() => setTestedSound(false), 3000);
   };
 
+  const handleTestPhoneNotification = async () => {
+    if (!notificationsGranted) {
+      const granted = await notificationSound.requestNotificationPermission();
+      setNotificationsGranted(granted);
+      if (!granted) return;
+    }
+
+    notificationSound.playBookingRingtone();
+    notificationSound.showSystemNotification(
+      'Novo Agendamento! 💕 Studio Bella',
+      'Camila Rodrigues agendou Escova & Hidratação para amanhã às 14:30 (R$ 130,00)',
+      '/icon.svg',
+      { test: true }
+    );
+    setTestedSound(true);
+    setTimeout(() => setTestedSound(false), 3000);
+  };
+
   const handleRequestNotifications = async () => {
     const granted = await notificationSound.requestNotificationPermission();
     setNotificationsGranted(granted);
     if (granted) {
+      notificationSound.playBookingRingtone();
       notificationSound.showSystemNotification(
-        'Notificações Ativadas! 🔔',
-        'Seu celular/computador tocará sempre que uma cliente fizer um agendamento.'
+        'Notificações no Topo do Celular Ativadas! 🔔',
+        'Você receberá alertas no topo do aparelho com toque e vibração quando clientes agendarem.',
+        '/icon.svg'
       );
     }
   };
@@ -167,6 +189,20 @@ export const AdminSettings: React.FC = () => {
 
         <button
           type="button"
+          id="tab-google-calendar-sync"
+          onClick={() => setActiveSubTab('google-calendar')}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+            activeSubTab === 'google-calendar'
+              ? 'border-[#8E5D52] text-[#8E5D52]'
+              : 'border-transparent text-[#7D756D] hover:text-[#2D2926]'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Google Calendar</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveSubTab('security')}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
             activeSubTab === 'security'
@@ -181,6 +217,10 @@ export const AdminSettings: React.FC = () => {
 
       {/* Main Settings Form */}
       <form onSubmit={handleSave} className="space-y-6">
+        {/* SUBTAB: GOOGLE CALENDAR */}
+        {activeSubTab === 'google-calendar' && (
+          <GoogleCalendarSyncSettings />
+        )}
         {/* SUBTAB: PROFILE & SALON */}
         {activeSubTab === 'profile' && (
           <div className="bg-white rounded-3xl border border-[#EAE4DD] p-6 shadow-xs space-y-4">
@@ -497,26 +537,27 @@ export const AdminSettings: React.FC = () => {
               <div className="flex items-center justify-between border-b border-[#F5F2ED] pb-3">
                 <h3 className="font-['Playfair_Display',serif] text-base font-bold text-[#2D2926] flex items-center gap-2">
                   <Smartphone className="w-4 h-4 text-emerald-600" />
-                  <span>Toque e Notificação de Novos Agendamentos</span>
+                  <span>Notificação no Topo do Celular (Barra de Notificações)</span>
                 </h3>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                  Som Automático Ativo
+                  Toque + Push no Topo
                 </span>
               </div>
 
               <div className="space-y-4">
                 <p className="text-xs text-[#59524C] leading-relaxed">
-                  Sempre que uma cliente realizar um agendamento online pelo site, o sistema toca um alarme sonoro agradável e emite uma notificação em tempo real no seu celular ou computador.
+                  Sempre que uma cliente realizar um novo agendamento, o celular da proprietária emitirá um <strong>toque sonoro</strong>, <strong>vibração</strong> e uma <strong>notificação visual na barra superior do celular (gaveta de notificações do Android)</strong> com o nome da cliente, procedimento e valor.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   <button
                     type="button"
-                    onClick={handleTestSound}
-                    className="px-4 py-2.5 bg-[#F5F2ED] hover:bg-[#EAE4DD] text-[#2D2926] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border border-[#EAE4DD]"
+                    id="test-phone-push-notification-btn"
+                    onClick={handleTestPhoneNotification}
+                    className="px-4 py-2.5 bg-[#8E5D52] hover:bg-[#784D43] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
                   >
-                    <Volume2 className="w-4 h-4 text-[#8E5D52]" />
-                    <span>{testedSound ? '🔊 Tocando no Celular...' : 'Testar Toque do Celular'}</span>
+                    <Smartphone className="w-4 h-4 text-white" />
+                    <span>{testedSound ? '📲 Disparando no Celular...' : 'Testar Notificação no Topo do Celular'}</span>
                   </button>
 
                   <button
@@ -525,12 +566,18 @@ export const AdminSettings: React.FC = () => {
                     className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border ${
                       notificationsGranted
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-[#8E5D52] text-white hover:bg-[#784D43] border-transparent'
+                        : 'bg-[#F5F2ED] text-[#2D2926] hover:bg-[#EAE4DD] border-[#EAE4DD]'
                     }`}
                   >
                     <Bell className="w-4 h-4" />
-                    <span>{notificationsGranted ? 'Notificações Ativadas no Aparelho ✓' : 'Permitir Notificações no Celular'}</span>
+                    <span>{notificationsGranted ? 'Permissão Ativada no Celular ✓' : 'Ativar Permissão no Aparelho'}</span>
                   </button>
+                </div>
+
+                <div className="p-3 bg-[#F9F7F5] rounded-xl border border-[#EAE4DD] text-[11px] text-[#7D756D] space-y-1">
+                  <p className="font-semibold text-[#2D2926]">💡 Dica para receber sempre no topo do seu celular:</p>
+                  <p>1. Clique em <strong>"Ativar Permissão no Aparelho"</strong> e toque em <em>Permitir</em> quando o navegador solicitar.</p>
+                  <p>2. No navegador do seu celular (Chrome), você também pode tocar nos 3 pontinhos e selecionar <strong>"Adicionar à tela inicial" / "Instalar aplicativo"</strong> para receber as notificações como um app nativo.</p>
                 </div>
               </div>
             </div>

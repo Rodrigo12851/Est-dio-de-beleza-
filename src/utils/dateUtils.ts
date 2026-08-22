@@ -16,11 +16,21 @@ export function formatTimeFriendly(minutes: number): string {
   return `${hours}h${remainingMinutes < 10 ? '0' : ''}${remainingMinutes}`;
 }
 
-export function formatCurrency(value: number): string {
+export function formatCurrency(value?: number | null): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return 'R$ 0,00';
+  }
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
+}
+
+export function formatPriceOrConsult(value?: number | null, fallback = 'Sob consulta'): string {
+  if (value === undefined || value === null || isNaN(value) || value <= 0) {
+    return fallback;
+  }
+  return formatCurrency(value);
 }
 
 export function timeToMinutes(timeStr: string): number {

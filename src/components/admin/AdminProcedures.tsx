@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSalon } from '../../context/SalonContext';
 import { Procedure, ProcedureCategory } from '../../types';
-import { formatCurrency, formatTimeFriendly } from '../../utils/dateUtils';
+import { formatCurrency, formatPriceOrConsult, formatTimeFriendly } from '../../utils/dateUtils';
 import {
   Scissors,
   Plus,
@@ -16,6 +16,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { ImageUploadPicker } from '../common/ImageUploadPicker';
+import { getSafeImageUrl, DEFAULT_PROCEDURE_PHOTO } from '../../utils/imageUtils';
 
 const CATEGORIES: ProcedureCategory[] = ['Cabelo', 'Maquiagem', 'Unhas', 'Sobrancelhas', 'Outros'];
 
@@ -50,7 +51,7 @@ export const AdminProcedures: React.FC = () => {
     setName(proc.name);
     setCategory(proc.category);
     setDescription(proc.description);
-    setPrice(String(proc.price));
+    setPrice(proc.price && proc.price > 0 ? String(proc.price) : '');
     setDurationMinutes(String(proc.durationMinutes));
     setPhoto(proc.photo);
     setActive(proc.active);
@@ -69,14 +70,16 @@ export const AdminProcedures: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !price || !durationMinutes) return;
+    if (!name.trim() || !durationMinutes) return;
+
+    const parsedPrice = price.trim() !== '' ? parseFloat(price) : 0;
 
     const procedureData: Procedure = {
       id: editingProcedure ? editingProcedure.id : `proc-${Date.now()}`,
       name: name.trim(),
       category,
       description: description.trim(),
-      price: parseFloat(price) || 0,
+      price: isNaN(parsedPrice) ? 0 : parsedPrice,
       durationMinutes: parseInt(durationMinutes, 10) || 60,
       photo: photo.trim() || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=600',
       active,
@@ -122,7 +125,7 @@ export const AdminProcedures: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-start gap-3.5">
                 <img
-                  src={proc.photo}
+                  src={getSafeImageUrl(proc.photo, DEFAULT_PROCEDURE_PHOTO)}
                   alt={proc.name}
                   referrerPolicy="no-referrer"
                   className="w-16 h-16 rounded-2xl object-cover shrink-0 border border-[#EAE4DD]"
@@ -153,7 +156,7 @@ export const AdminProcedures: React.FC = () => {
                   <span>{formatTimeFriendly(proc.durationMinutes)}</span>
                 </div>
                 <div className="text-right font-extrabold text-[#2D2926]">
-                  {formatCurrency(proc.price)}
+                  {formatPriceOrConsult(proc.price, 'Sob consulta')}
                 </div>
               </div>
             </div>
@@ -243,17 +246,19 @@ export const AdminProcedures: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-[#2D2926] uppercase tracking-wider mb-1">
-                    Preço (R$) *
+                    Preço (R$) <span className="text-[#8E5D52] font-normal lowercase">(opcional)</span>
                   </label>
                   <input
                     type="number"
                     step="0.5"
-                    required
-                    placeholder="120.00"
+                    placeholder="Ex: 120.00 (ou deixe vazio)"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-[#FDFBF9] border border-[#EAE4DD] rounded-xl text-sm text-[#2D2926] focus:bg-white focus:border-[#8E5D52] focus:outline-none"
                   />
+                  <p className="text-[10px] text-[#7D756D] mt-1">
+                    Deixe em branco para exibir "Sob consulta" ou "A combinar".
+                  </p>
                 </div>
               </div>
 

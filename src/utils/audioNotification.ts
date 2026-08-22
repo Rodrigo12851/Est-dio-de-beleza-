@@ -1,8 +1,24 @@
-// Audio notification & ringtone generator using Web Audio API
-// 100% reliable on mobile and desktop without external audio file dependencies
+// Audio notification, ringtone generator & Native Android / Mobile Notification service
+// 100% reliable on mobile (Android Chrome, PWA) and desktop
 
 class NotificationSoundService {
   private audioCtx: AudioContext | null = null;
+  private swRegistration: ServiceWorkerRegistration | null = null;
+
+  constructor() {
+    this.initServiceWorker();
+  }
+
+  // Initialize service worker for native Android top bar notifications
+  public async initServiceWorker() {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      this.swRegistration = reg;
+    } catch (e) {
+      console.warn('Service Worker registration skipped or unavailable in sandbox:', e);
+    }
+  }
 
   private getAudioContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -81,7 +97,7 @@ class NotificationSoundService {
       // Mobile device vibration if supported
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try {
-          navigator.vibrate([200, 100, 200, 100, 300]);
+          navigator.vibrate([300, 150, 300, 150, 400]);
         } catch {
           // ignore vibration error
         }
@@ -110,17 +126,66 @@ class NotificationSoundService {
     return false;
   }
 
-  // Show native system/browser notification if permitted
-  public showSystemNotification(title: string, body: string, icon?: string) {
+  // Check if system notifications are granted
+  public isPermissionGranted(): boolean {
+    if (typeof window === 'undefined' || !('Notification' in window)) return false;
+    return Notification.permission === 'granted';
+  }
+
+  // Show native system/mobile Android notification in the top status bar / drawer
+  public async showSystemNotification(title: string, body: string, icon?: string, data?: any) {
     if (typeof window === 'undefined' || !('Notification' in window)) return;
-    try {
-      if (Notification.permission === 'granted') {
-        new Notification(title, {
-          body,
-          icon: icon || '/vite.svg',
-          tag: 'salon-appointment',
-        });
+    if (Notification.permission !== 'granted') return;
+
+    const iconUrl = icon || '/icon.svg';
+    const vibrationPattern = [300, 100, 300, 100, 300, 100, 500];
+
+    // Trigger phone vibration
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(vibrationPattern);
+      } catch {
+        // ignore
       }
+    }
+
+    // Prefer ServiceWorker showNotification on Android/Mobile for persistent top drawer display
+    try {
+      if ('serviceWorker' in navigator) {
+        let reg = this.swRegistration;
+        if (!reg) {
+          reg = await navigator.serviceWorker.ready.catch(() => null);
+        }
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            body,
+            icon: iconUrl,
+            badge: iconUrl,
+            tag: `studio-bella-${Date.now()}`,
+            renotify: true,
+            requireInteraction: true,
+            data: {
+              url: window.location.href,
+              ...data,
+            },
+          } as any);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Service worker showNotification fallback:', e);
+    }
+
+    // Fallback to window Notification API
+    try {
+      new Notification(title, {
+        body,
+        icon: iconUrl,
+        badge: iconUrl,
+        tag: `studio-bella-${Date.now()}`,
+        renotify: true,
+        data,
+      } as any);
     } catch {
       // ignore
     }
@@ -128,3 +193,4 @@ class NotificationSoundService {
 }
 
 export const notificationSound = new NotificationSoundService();
+

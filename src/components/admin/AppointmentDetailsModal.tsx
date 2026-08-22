@@ -26,8 +26,15 @@ import {
   Trash2,
   Check,
   Send,
-  Sparkles
+  Sparkles,
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
+import {
+  syncAppointmentToGoogleCalendar,
+  getCachedToken,
+  requestGoogleCalendarAuth
+} from '../../services/googleCalendarService';
 
 interface AppointmentDetailsModalProps {
   appointment: Appointment | null;
@@ -75,6 +82,8 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
   const [editDate, setEditDate] = useState(liveAppointment?.date || '');
   const [editTime, setEditTime] = useState(liveAppointment?.time || '');
   const [errorMsg, setErrorMsg] = useState('');
+  const [calendarSyncing, setCalendarSyncing] = useState(false);
+  const [calendarSuccessMsg, setCalendarSuccessMsg] = useState('');
 
   if (!liveAppointment) return null;
   const appointment = liveAppointment;
@@ -83,8 +92,43 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
   const whatsappReminderUrl = buildWhatsAppReminderUrl(appointment, config);
   const whatsappChatUrl = buildWhatsAppDirectContactUrl(appointment.clientPhone);
 
-  const handleStatusChange = (newStatus: AppointmentStatus) => {
+  const handleStatusChange = async (newStatus: AppointmentStatus) => {
     updateAppointmentStatus(appointment.id, newStatus);
+
+    // Auto sync to Google Calendar if enabled in settings and status is confirmed or completed
+    if (
+      config.googleCalendar?.enabled &&
+      config.googleCalendar?.autoSyncConfirmed &&
+      (newStatus === 'confirmado' || newStatus === 'concluido')
+    ) {
+      try {
+        const res = await syncAppointmentToGoogleCalendar({ ...appointment, status: newStatus }, config);
+        if (res.eventId && res.eventId !== appointment.googleCalendarEventId) {
+          updateAppointmentDetails(appointment.id, { googleCalendarEventId: res.eventId });
+        }
+      } catch (e) {
+        console.warn('Auto Google Calendar sync skipped/error:', e);
+      }
+    }
+  };
+
+  const handleManualCalendarSync = async () => {
+    setCalendarSyncing(true);
+    setCalendarSuccessMsg('');
+    setErrorMsg('');
+
+    try {
+      const res = await syncAppointmentToGoogleCalendar(appointment, config);
+      if (res.eventId && res.eventId !== appointment.googleCalendarEventId) {
+        updateAppointmentDetails(appointment.id, { googleCalendarEventId: res.eventId });
+      }
+      setCalendarSuccessMsg('Evento sincronizado com sucesso no Google Calendar!');
+      setTimeout(() => setCalendarSuccessMsg(''), 4000);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Falha ao sincronizar com o Google Calendar.');
+    } finally {
+      setCalendarSyncing(false);
+    }
   };
 
   const handleSavePayment = () => {
@@ -202,6 +246,41 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
             >
               <MessageCircle className="w-3.5 h-3.5 fill-white" />
               <span>{appointment.reminderSent ? 'Reenviar Lembrete' : 'Enviar Confirmação'}</span>
+            </button>
+          </div>
+
+          {/* Google Calendar 1-Click Sync Card */}
+          <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5 text-blue-700" />
+                <span className="text-xs font-bold text-blue-900">Google Calendar</span>
+                {appointment.googleCalendarEventId ? (
+                  <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                    Sincronizado ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-stone-100 text-stone-600 font-medium px-2 py-0.5 rounded-full">
+                    Pendente
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-blue-800/80">
+                {calendarSuccessMsg || (appointment.googleCalendarEventId
+                  ? 'Evento registrado no seu Google Calendar com alertas.'
+                  : 'Sincronize este horário com a sua agenda do Google.')}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              id="sync-single-modal-appointment-btn"
+              onClick={handleManualCalendarSync}
+              disabled={calendarSyncing}
+              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${calendarSyncing ? 'animate-spin' : ''}`} />
+              <span>{calendarSyncing ? 'Sincronizando...' : appointment.googleCalendarEventId ? 'Atualizar no Google' : 'Enviar p/ Google Calendar'}</span>
             </button>
           </div>
 

@@ -1,8 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useSalon } from '../../context/SalonContext';
 import { Procedure, GalleryWork, ProcedureCategory } from '../../types';
-import { formatCurrency, formatTimeFriendly, getDayOfWeekName } from '../../utils/dateUtils';
+import { formatCurrency, formatPriceOrConsult, formatTimeFriendly, getDayOfWeekName } from '../../utils/dateUtils';
 import { buildWhatsAppDirectContactUrl } from '../../utils/whatsappUtils';
+import {
+  getSafeImageUrl,
+  DEFAULT_AVATAR,
+  DEFAULT_PROCEDURE_PHOTO,
+  DEFAULT_GALLERY_PHOTO
+} from '../../utils/imageUtils';
 import {
   Sparkles,
   Calendar,
@@ -74,7 +80,7 @@ const GalleryCardSlide: React.FC<{
       <div className="absolute inset-0 cursor-pointer" onClick={() => onOpenZoom(work)}>
         <img
           key={slideIndex}
-          src={photos[slideIndex] || work.photo}
+          src={getSafeImageUrl(photos[slideIndex] || work.photo, DEFAULT_GALLERY_PHOTO)}
           alt={`${work.title} - foto ${slideIndex + 1}`}
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -262,7 +268,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 <img
-                  src={config.avatar}
+                  src={getSafeImageUrl(config.avatar, DEFAULT_AVATAR)}
                   alt={config.ownerName}
                   referrerPolicy="no-referrer"
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-[#EAE4DD] shadow-xs shrink-0"
@@ -375,7 +381,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                   onClick={() => onOpenProcedureDetails(proc)}
                 >
                   <img
-                    src={proc.photo}
+                    src={getSafeImageUrl(proc.photo, DEFAULT_PROCEDURE_PHOTO)}
                     alt={proc.name}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
@@ -406,8 +412,8 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
                   <div className="pt-3 border-t border-[#F0EAE4] flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <span className="text-[10px] sm:text-[11px] text-[#7D756D] block">Valor</span>
-                      <span className="text-base sm:text-lg font-extrabold text-[#2D2926] truncate block">
-                        {formatCurrency(proc.price)}
+                      <span className={`text-base sm:text-lg truncate block ${proc.price && proc.price > 0 ? 'font-extrabold text-[#2D2926]' : 'font-bold text-[#8E5D52]'}`}>
+                        {formatPriceOrConsult(proc.price, 'Sob consulta')}
                       </span>
                     </div>
 
@@ -513,7 +519,7 @@ export const ClientHome: React.FC<ClientHomeProps> = ({
             <div className="md:col-span-1 space-y-3.5 text-center md:text-left min-w-0">
               <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto md:mx-0 rounded-2xl overflow-hidden border-2 border-[#EAE4DD] shadow-xs">
                 <img
-                  src={config.avatar}
+                  src={getSafeImageUrl(config.avatar, DEFAULT_AVATAR)}
                   alt={config.ownerName}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"

@@ -58,6 +58,7 @@ export interface Appointment {
   source: 'online' | 'whatsapp' | 'presencial';
   createdAt: string;
   reminderSent?: boolean;
+  googleCalendarEventId?: string;
 }
 
 export interface BlockedSlot {
@@ -80,6 +81,14 @@ export interface DaySchedule {
   enabled: boolean;
   start: string; // "08:00"
   end: string;   // "19:00"
+}
+
+export interface GoogleCalendarConfig {
+  enabled: boolean;
+  autoSyncConfirmed: boolean;
+  connectedEmail?: string;
+  calendarId?: string; // default is 'primary'
+  lastSyncAt?: string;
 }
 
 export interface SalonConfig {
@@ -106,4 +115,5 @@ export interface SalonConfig {
   cancellationPolicy: string;
   whatsappConfirmationTemplate: string;
   adminPin: string;
+  googleCalendar?: GoogleCalendarConfig;
 }

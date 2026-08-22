@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSalon } from '../../context/SalonContext';
 import { GalleryWork, Procedure } from '../../types';
 import { formatDateBR } from '../../utils/dateUtils';
+import { getSafeImageUrl, DEFAULT_GALLERY_PHOTO } from '../../utils/imageUtils';
 import {
   X,
   Calendar,
@@ -86,7 +87,7 @@ export const GalleryLightboxModal: React.FC<GalleryLightboxModalProps> = ({
         <div className="relative bg-black flex items-center justify-center min-h-[260px] sm:min-h-[340px] max-h-[55vh] overflow-hidden group">
           <img
             key={currentPhotoIndex}
-            src={photos[currentPhotoIndex] || work.photo}
+            src={getSafeImageUrl(photos[currentPhotoIndex] || work.photo, DEFAULT_GALLERY_PHOTO)}
             alt={`${work.title} - Foto ${currentPhotoIndex + 1}`}
             referrerPolicy="no-referrer"
             className="w-full h-full max-h-[55vh] object-contain transition-opacity duration-300 select-none"
@@ -139,7 +140,7 @@ export const GalleryLightboxModal: React.FC<GalleryLightboxModalProps> = ({
                 }`}
               >
                 <img
-                  src={p}
+                  src={getSafeImageUrl(p, DEFAULT_GALLERY_PHOTO)}
                   alt={`Miniatura ${idx + 1}`}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"

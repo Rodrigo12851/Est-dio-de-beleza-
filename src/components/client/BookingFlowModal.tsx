@@ -3,12 +3,14 @@ import { useSalon } from '../../context/SalonContext';
 import { Procedure, ProcedureCategory, Appointment, AppointmentProcedureItem } from '../../types';
 import {
   formatCurrency,
+  formatPriceOrConsult,
   formatTimeFriendly,
   formatDateBR,
   getRelativeDayLabel,
   addMinutesToTime,
 } from '../../utils/dateUtils';
 import { formatPhoneMask, cleanPhone, buildClientConfirmationShareUrl } from '../../utils/whatsappUtils';
+import { getSafeImageUrl, DEFAULT_PROCEDURE_PHOTO } from '../../utils/imageUtils';
 import {
   X,
   ChevronLeft,
@@ -337,7 +339,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                         </div>
 
                         <img
-                          src={proc.photo}
+                          src={getSafeImageUrl(proc.photo, DEFAULT_PROCEDURE_PHOTO)}
                           alt={proc.name}
                           referrerPolicy="no-referrer"
                           className="w-12 h-12 rounded-xl object-cover shrink-0 border border-[#EAE4DD]"
@@ -360,8 +362,8 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                       </div>
 
                       <div className="text-right shrink-0">
-                        <span className="text-sm font-extrabold text-[#2D2926] block">
-                          {formatCurrency(proc.price)}
+                        <span className={`text-sm block ${proc.price && proc.price > 0 ? 'font-extrabold text-[#2D2926]' : 'font-bold text-[#8E5D52]'}`}>
+                          {formatPriceOrConsult(proc.price, 'Sob consulta')}
                         </span>
                         <span
                           className={`text-[11px] font-bold ${
@@ -398,7 +400,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                   <div className="text-right">
                     <span className="text-[#7D756D] block">Total:</span>
                     <span className="font-extrabold text-[#8E5D52] text-sm">
-                      {formatCurrency(totalPrice)}
+                      {formatPriceOrConsult(totalPrice, 'A combinar')}
                     </span>
                   </div>
                 </div>
@@ -730,7 +732,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                             <span className="font-bold">{proc.name}</span>
                             <span className="text-[10px] text-[#7D756D]">({formatTimeFriendly(proc.durationMinutes)})</span>
                           </span>
-                          <span className="font-semibold text-[#8E5D52]">{formatCurrency(proc.price)}</span>
+                          <span className="font-semibold text-[#8E5D52]">{formatPriceOrConsult(proc.price, 'Sob consulta')}</span>
                         </div>
                       ))}
                     </div>
@@ -770,7 +772,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                   <div className="flex justify-between pt-2 text-sm gap-2">
                     <span className="font-bold text-[#2D2926] shrink-0">Valor Total:</span>
                     <span className="font-extrabold text-[#8E5D52] text-base text-right">
-                      {formatCurrency(totalPrice)}
+                      {formatPriceOrConsult(totalPrice, 'A combinar')}
                     </span>
                   </div>
                 </div>
@@ -816,7 +818,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                       {confirmedAppointment.procedures.map((p, idx) => (
                         <div key={p.id} className="flex justify-between text-[#2D2926]">
                           <span>• {p.name} ({formatTimeFriendly(p.durationMinutes)})</span>
-                          <span className="font-semibold text-[#8E5D52]">{formatCurrency(p.price)}</span>
+                          <span className="font-semibold text-[#8E5D52]">{formatPriceOrConsult(p.price, 'Sob consulta')}</span>
                         </div>
                       ))}
                     </div>
@@ -835,7 +837,7 @@ export const BookingFlowModal: React.FC<BookingFlowModalProps> = ({
                 <div className="flex justify-between gap-2">
                   <span className="text-[#7D756D] shrink-0">Valor Total:</span>
                   <span className="font-bold text-[#2D2926] text-right">
-                    {formatCurrency(confirmedAppointment.finalPrice || confirmedAppointment.price)}
+                    {formatPriceOrConsult(confirmedAppointment.finalPrice || confirmedAppointment.price, 'A combinar')}
                   </span>
                 </div>
 

@@ -15,6 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import { ImageUploadPicker } from '../common/ImageUploadPicker';
+import { getSafeImageUrl, DEFAULT_GALLERY_PHOTO } from '../../utils/imageUtils';
 
 const CATEGORIES: ProcedureCategory[] = ['Cabelo', 'Maquiagem', 'Unhas', 'Sobrancelhas', 'Outros'];
 
@@ -124,7 +125,7 @@ export const AdminGallery: React.FC = () => {
             <div>
               <div className="relative h-48 bg-[#F5F2ED] overflow-hidden">
                 <img
-                  src={work.photo}
+                  src={getSafeImageUrl(work.photo, DEFAULT_GALLERY_PHOTO)}
                   alt={work.title}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"

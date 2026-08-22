@@ -2,6 +2,7 @@ import React from 'react';
 import { useSalon } from '../../context/SalonContext';
 import { Sparkles, MessageCircle, Shield } from 'lucide-react';
 import { buildWhatsAppDirectContactUrl } from '../../utils/whatsappUtils';
+import { getSafeImageUrl, DEFAULT_AVATAR } from '../../utils/imageUtils';
 
 interface ClientNavbarProps {
   onOpenBooking: () => void;
@@ -27,9 +28,9 @@ export const ClientNavbar: React.FC<ClientNavbarProps> = ({ onOpenBooking, onOpe
         {/* Salon Logo & Name */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 mr-2">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden border border-[#EAE4DD] shadow-xs bg-[#F5F2ED] flex items-center justify-center shrink-0">
-            {config.avatar ? (
+            {config.avatar && config.avatar.trim() ? (
               <img
-                src={config.avatar}
+                src={getSafeImageUrl(config.avatar, DEFAULT_AVATAR)}
                 alt={config.name}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"

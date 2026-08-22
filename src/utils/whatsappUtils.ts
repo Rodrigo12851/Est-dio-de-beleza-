@@ -1,5 +1,5 @@
 import { Appointment, SalonConfig } from '../types';
-import { formatDateBR, formatCurrency, formatTimeFriendly } from './dateUtils';
+import { formatDateBR, formatCurrency, formatPriceOrConsult, formatTimeFriendly } from './dateUtils';
 
 export function cleanPhone(phone: string): string {
   return phone.replace(/\D/g, '');
@@ -28,7 +28,7 @@ export function buildWhatsAppReminderUrl(appointment: Appointment, salonConfig: 
     .replace(/{data}/g, formatDateBR(appointment.date))
     .replace(/{horario}/g, appointment.time)
     .replace(/{salao}/g, salonConfig.name)
-    .replace(/{valor}/g, formatCurrency(appointment.finalPrice || appointment.price));
+    .replace(/{valor}/g, formatPriceOrConsult(appointment.finalPrice || appointment.price, 'A combinar'));
 
   return `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 }
@@ -47,16 +47,19 @@ export function buildClientConfirmationShareUrl(appointment: Appointment, salonC
   let procedureDetails = `✨ *Procedimento:* ${appointment.procedureName}`;
   if (appointment.procedures && appointment.procedures.length > 1) {
     const list = appointment.procedures
-      .map((p) => `  • ${p.name} (${formatTimeFriendly(p.durationMinutes)} - ${formatCurrency(p.price)})`)
+      .map((p) => `  • ${p.name} (${formatTimeFriendly(p.durationMinutes)}${p.price > 0 ? ` - ${formatCurrency(p.price)}` : ''})`)
       .join('\n');
     procedureDetails = `✨ *Procedimentos Selecionados:*\n${list}\n⏳ *Duração Total:* ${formatTimeFriendly(appointment.durationMinutes)}`;
   }
+
+  const priceVal = appointment.finalPrice || appointment.price;
+  const priceFormatted = formatPriceOrConsult(priceVal, 'A combinar');
 
   const text = `Olá, ${salonConfig.ownerName}! 💕 Acabei de agendar meu horário pelo site:\n\n` +
     `${procedureDetails}\n` +
     `📅 *Data:* ${formatDateBR(appointment.date)}\n` +
     `⏰ *Horário:* ${appointment.time}\n` +
-    `💰 *Valor Total:* ${formatCurrency(appointment.finalPrice || appointment.price)}\n` +
+    `💰 *Valor:* ${priceFormatted}\n` +
     `👤 *Cliente:* ${appointment.clientName}\n\n` +
     `Aguardo a confirmação! ✨`;
 

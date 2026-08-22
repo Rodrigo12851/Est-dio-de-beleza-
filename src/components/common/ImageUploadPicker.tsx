@@ -209,43 +209,45 @@ export const ImageUploadPicker: React.FC<ImageUploadPickerProps> = ({
 
       {/* Previews */}
       {multiple ? (
-        values.length > 0 && (
+        values.filter((img) => img && typeof img === 'string' && img.trim() !== '').length > 0 && (
           <div className="space-y-1.5 pt-1">
             <span className="text-[11px] font-bold text-[#7D756D] block">
-              Fotos Selecionadas para o Slide ({values.length}):
+              Fotos Selecionadas para o Slide ({values.filter((img) => img && typeof img === 'string' && img.trim() !== '').length}):
             </span>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {values.map((img, idx) => (
-                <div key={idx} className="relative group rounded-xl overflow-hidden aspect-square border border-[#EAE4DD] bg-[#F5F2ED]">
-                  <img
-                    src={img}
-                    alt={`Preview ${idx + 1}`}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                  />
-                  {idx === 0 && (
-                    <span className="absolute bottom-1 left-1 bg-[#2D2926]/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                      Capa
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(idx)}
-                    className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-90 hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
-                    title="Remover foto"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
+              {values
+                .filter((img) => img && typeof img === 'string' && img.trim() !== '')
+                .map((img, idx) => (
+                  <div key={idx} className="relative group rounded-xl overflow-hidden aspect-square border border-[#EAE4DD] bg-[#F5F2ED]">
+                    <img
+                      src={img.trim()}
+                      alt={`Preview ${idx + 1}`}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                    />
+                    {idx === 0 && (
+                      <span className="absolute bottom-1 left-1 bg-[#2D2926]/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                        Capa
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(idx)}
+                      className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-90 hover:opacity-100 transition-opacity cursor-pointer shadow-xs"
+                      title="Remover foto"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         )
       ) : (
-        value && (
+        value && typeof value === 'string' && value.trim() !== '' && (
           <div className="relative inline-block mt-2 rounded-2xl overflow-hidden border border-[#EAE4DD] bg-[#F5F2ED] shadow-xs">
             <img
-              src={value}
+              src={value.trim()}
               alt="Prévia"
               referrerPolicy="no-referrer"
               className="w-28 h-28 object-cover"

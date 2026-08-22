@@ -1,12 +1,11 @@
 {
-  "projectId": "studio-de-beleza-8045a",
-  "appId": "1:152184282359:web:eb07bf49563e9e8f14c7f2",
-  "apiKey": "AIzaSyD67kLzURLYIbDozET0SqaWFE3X4fCsf1k",
-  "authDomain": "studio-de-beleza-8045a.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-studiobellaagend-7905ecf7-8a32-4b39-845f-c7bc92c568b1",
-  "storageBucket": "studio-de-beleza-8045a.firebasestorage.app",
-  "messagingSenderId": "152184282359",
+  "projectId": "gen-lang-client-0412828564",
+  "appId": "1:60245837027:web:3b2a28e71a55edf38f71d6",
+  "apiKey": "AIzaSyB0MuFxvY3g4tRVWA5ViUtkRh598e4o-J8",
+  "authDomain": "gen-lang-client-0412828564.firebaseapp.com",
+  "storageBucket": "gen-lang-client-0412828564.firebasestorage.app",
+  "messagingSenderId": "60245837027",
   "measurementId": "",
-  "oAuthClientId": "152184282359-cj3qa3qrkkaptrv1phj88j964872ic5m.apps.googleusercontent.com",
+  "oAuthClientId": "60245837027-chusreus2g5ioniv4o1bopmq6cnamcnc.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }
