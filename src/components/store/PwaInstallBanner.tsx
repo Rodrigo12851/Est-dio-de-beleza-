@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Download, X, Check } from 'lucide-react';
+import { Smartphone, Download, X } from 'lucide-react';
+import { useStore } from '../../context/StoreContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -7,6 +8,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const PwaInstallBanner: React.FC = () => {
+  const { currentStore } = useStore();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -59,7 +61,7 @@ export const PwaInstallBanner: React.FC = () => {
             <Smartphone className="w-3.5 h-3.5" />
           </div>
           <p className="text-[#A0A0A0] truncate">
-            <strong className="font-semibold text-[#F8F5F2]">Instale o App Allure Intimidades:</strong> Acesso instantâneo com experiência exclusiva de boutique.
+            <strong className="font-semibold text-[#F8F5F2]">Instale o App {currentStore?.name || 'Intima Lab'}:</strong> Acesso instantâneo com experiência exclusiva de boutique.
           </p>
         </div>
 

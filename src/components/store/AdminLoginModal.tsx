@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore, SUPER_ADMIN_PIN, MAX_LOGIN_ATTEMPTS } from '../../context/StoreContext';
 import {
   Lock,
@@ -19,6 +19,7 @@ interface AdminLoginModalProps {
   onClose: () => void;
   onSuccess: () => void;
   initialType?: 'merchant' | 'superadmin';
+  lockToCurrentStore?: boolean;
 }
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
@@ -26,13 +27,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onSuccess,
   initialType = 'merchant',
+  lockToCurrentStore = true,
 }) => {
   const {
     merchantLogin,
     superAdminLogin,
     allStores,
     currentStoreId,
-    selectStore,
+    currentStore,
     setAppRoute,
     isStoreBlocked,
     getRemainingAttempts,
@@ -40,15 +42,21 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   } = useStore();
 
   const [loginType, setLoginType] = useState<'merchant' | 'superadmin'>(initialType);
-  const [selectedStoreId, setSelectedStoreId] = useState<string>(currentStoreId);
   const [pin, setPin] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Sincronizar loginType se initialType mudar
+  useEffect(() => {
+    setLoginType(initialType);
+    setPin('');
+    setErrorMessage(null);
+  }, [initialType]);
+
   if (!isOpen) return null;
 
-  const targetStore = allStores.find((s) => s.id === selectedStoreId) || allStores[0];
-  const isBlocked = loginType === 'merchant' && isStoreBlocked(selectedStoreId);
-  const remainingAttempts = loginType === 'merchant' ? getRemainingAttempts(selectedStoreId) : MAX_LOGIN_ATTEMPTS;
+  const targetStore = allStores.find((s) => s.id === currentStoreId) || currentStore || allStores[0];
+  const isBlocked = loginType === 'merchant' && isStoreBlocked(targetStore.id);
+  const remainingAttempts = loginType === 'merchant' ? getRemainingAttempts(targetStore.id) : MAX_LOGIN_ATTEMPTS;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +65,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     if (loginType === 'merchant') {
       if (isBlocked) return;
 
-      const result = merchantLogin(pin, selectedStoreId);
+      const result = merchantLogin(pin, targetStore.id);
       if (result.success) {
         setErrorMessage(null);
         setPin('');
@@ -66,10 +74,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         onClose();
       } else {
         if (result.blocked) {
-          setErrorMessage('Limite de tentativas excedido! Sua loja foi bloqueada por segurança.');
+          setErrorMessage('Limite de 4 tentativas excedido! O acesso desta loja foi bloqueado por segurança.');
         } else {
           setErrorMessage(
-            `Senha incorreta! Você tem mais ${result.remaining} tentativa(s) antes do bloqueio de segurança.`
+            `Senha incorreta! Você tem mais ${result.remaining} tentativa(s) antes do bloqueio da sua loja.`
           );
         }
       }
@@ -81,7 +89,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         onSuccess();
         onClose();
       } else {
-        setErrorMessage('Senha mestre de Super Admin incorreta.');
+        setErrorMessage('Chave mestre de Super Admin incorreta.');
       }
     }
   };
@@ -89,7 +97,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   const supportLink = getWhatsAppSupportLink(
     supportWhatsapp,
     targetStore?.name || 'Minha Loja',
-    targetStore?.id || selectedStoreId,
+    targetStore?.id || currentStoreId,
     'blocked_password'
   );
 
@@ -104,43 +112,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Tab switch between Lojista and Super Admin */}
-        <div className="flex rounded-xl bg-[#1F1F1F] border border-[#2A2A2A] p-1 gap-1">
-          <button
-            type="button"
-            onClick={() => {
-              setLoginType('merchant');
-              setErrorMessage(null);
-              setPin('');
-            }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              loginType === 'merchant'
-                ? 'bg-[#9B4B5A] text-white shadow-xs'
-                : 'text-[#A0A0A0] hover:text-[#F8F5F2]'
-            }`}
-          >
-            <StoreIcon className="w-3.5 h-3.5" />
-            <span>Área do Lojista</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLoginType('superadmin');
-              setErrorMessage(null);
-              setPin('');
-            }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              loginType === 'superadmin'
-                ? 'bg-[#D8A47F] text-[#121212] font-black shadow-xs'
-                : 'text-[#A0A0A0] hover:text-[#F8F5F2]'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>Super Admin</span>
-          </button>
-        </div>
-
-        <div className="text-center space-y-1.5">
+        {/* NUNCA exibir abas nem alternância de perfis: cada link é 100% isolado */}
+        <div className="text-center space-y-1.5 pt-2">
           <div
             className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto border ${
               isBlocked
@@ -153,37 +126,58 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             {isBlocked ? (
               <AlertTriangle className="w-6 h-6 text-red-400" />
             ) : loginType === 'merchant' ? (
-              <Lock className="w-6 h-6" />
+              <StoreIcon className="w-6 h-6" />
             ) : (
               <ShieldCheck className="w-6 h-6" />
             )}
           </div>
+          
           <h3 className="font-['Playfair_Display',serif] text-xl font-bold text-[#F8F5F2]">
             {isBlocked
               ? 'Acesso Bloqueado por Segurança'
               : loginType === 'merchant'
-              ? 'Acesso da Boutique'
+              ? (targetStore?.name || 'Painel da Boutique')
               : 'Painel Master Intima Lab'}
           </h3>
           <p className="text-xs text-[#A0A0A0]">
             {isBlocked
-              ? 'Limite de tentativas incorretas atingido nesta loja.'
+              ? `Limite de tentativas atingido na boutique ${targetStore?.name}.`
               : loginType === 'merchant'
-              ? `Acesso administrativo restrito à boutique parceira.`
-              : 'Controle central do ecossistema e gerenciamento de boutiques.'}
+              ? `Acesso administrativo restrito à equipe da loja ${targetStore?.name}.`
+              : 'Acesso restrito ao proprietário da plataforma Intima Lab.'}
           </p>
         </div>
+
+        {/* Identificação FIXA da Loja (Sem nenhum dropdown ou lista de outras lojas) */}
+        {loginType === 'merchant' && (
+          <div className="p-3 bg-[#1B1B1B] border border-[#2B2B2B] rounded-2xl flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#9B4B5A]/20 border border-[#9B4B5A]/30 flex items-center justify-center text-[#D8A47F] shrink-0">
+              <StoreIcon className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#A0A0A0] block">
+                Boutique Conectada
+              </span>
+              <p className="text-xs font-bold text-[#F8F5F2] truncate">
+                {targetStore?.name || 'Loja Parceira'}
+              </p>
+            </div>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">
+              Link Exclusivo
+            </span>
+          </div>
+        )}
 
         {/* CENÁRIO DE BLOQUEIO POR TENTATIVAS */}
         {isBlocked ? (
           <div className="p-4 rounded-2xl bg-red-950/40 border border-red-500/40 space-y-4 text-center">
             <div className="space-y-1">
               <p className="text-xs text-red-200 font-medium">
-                Por medidas de segurança, o login da loja{' '}
-                <strong className="text-white font-bold">{targetStore?.name}</strong> foi bloqueado.
+                Por medidas de proteção contra invasões, o acesso da loja{' '}
+                <strong className="text-white font-bold">{targetStore?.name}</strong> foi bloqueado temporariamente após 4 tentativas incorretas.
               </p>
               <p className="text-[11px] text-red-300/80">
-                Para redefinir sua senha com segurança, fale diretamente com o suporte e proprietário do Intima Lab via WhatsApp:
+                Fale diretamente com o Suporte Oficial no WhatsApp para realizar a liberação:
               </p>
             </div>
 
@@ -194,39 +188,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>Falar com o Suporte no WhatsApp (Desbloquear)</span>
+              <span>Solicitar Desbloqueio no WhatsApp</span>
             </a>
-
-            <p className="text-[10px] text-[#888888]">
-              Você também pode selecionar outra loja acima ou aguardar o desbloqueio pelo Super Admin.
-            </p>
           </div>
         ) : (
           /* FORMULÁRIO DE LOGIN NORMAL */
           <form onSubmit={handleSubmit} className="space-y-4">
-            {loginType === 'merchant' && (
-              <div>
-                <label className="block text-xs font-semibold text-[#E0E0E0] mb-1">
-                  Selecione a Loja
-                </label>
-                <select
-                  value={selectedStoreId}
-                  onChange={(e) => {
-                    setSelectedStoreId(e.target.value);
-                    setErrorMessage(null);
-                    setPin('');
-                  }}
-                  className="w-full py-2.5 px-3 bg-[#141414] border border-[#2A2A2A] rounded-xl text-xs text-[#F8F5F2] focus:outline-none focus:border-[#D8A47F]"
-                >
-                  {allStores.map((store) => (
-                    <option key={store.id} value={store.id} className="bg-[#1F1F1F] text-[#F8F5F2]">
-                      {store.name} ({store.ownerName})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-[#E0E0E0]">
@@ -269,7 +236,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   : 'bg-[#D8A47F] hover:bg-[#C8946F] text-[#121212]'
               }`}
             >
-              <span>{loginType === 'merchant' ? 'Entrar no Painel da Loja' : 'Acessar Central Intima Lab'}</span>
+              <span>{loginType === 'merchant' ? 'Entrar no Painel da Loja' : 'Acessar Painel Master'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

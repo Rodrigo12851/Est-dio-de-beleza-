@@ -37,10 +37,12 @@ O sistema opera com **isolamento estrito de rotas** por parâmetros de URL:
 
 ---
 
+---
+
 ## 4. Estrutura do Código-Fonte
 
 - `src/`
-  - `App.tsx`: Gerencia as 3 rotas centrais (`store`, `merchant`, `superadmin`) de acordo com os parâmetros da URL.
+  - `App.tsx`: Gerencia as 3 rotas centrais (`store`, `merchant`, `superadmin`) de acordo com os parâmetros da URL, com formulários de login direto e isolamento estrito por papel.
   - `types.ts`: Interfaces de dados TypeScript (`Product`, `ProductVariant`, `StoreConfig`, `Store`, `Order`, `AppRoute`, etc.).
   - `context/StoreContext.tsx`: Provedor de estado global (carrinho, loja ativa, permissões, autenticação, modo de cores).
   - `components/store/`:
@@ -49,6 +51,8 @@ O sistema opera com **isolamento estrito de rotas** por parâmetros de URL:
     - `ProductDetailModal.tsx`: Detalhes da peça com seleção de tamanho, cor e fotos.
     - `CartDrawer.tsx`: Sacola de compras com cálculo de frete/retirada e botão de pedido para WhatsApp.
     - `MobileNavDrawer.tsx`: Menu lateral responsivo para celular (sem links administrativos).
+    - `AdminLoginModal.tsx`: Modal auxiliar de login com bloqueio de alternância de abas e sem dropdown de lojas.
+    - `PwaInstallBanner.tsx`: Banner de instalação PWA dinâmico com o nome da loja ativa.
   - `components/admin/`:
     - `AdminLayout.tsx`: Interface completa do lojista (produtos, pedidos, configurações, alteração de senha).
   - `components/superadmin/`:
@@ -58,9 +62,33 @@ O sistema opera com **isolamento estrito de rotas** por parâmetros de URL:
 
 ---
 
-## 5. Histórico de Alterações Recentes
+## 5. Funcionamento PWA e Multi-Lojas (Aplicativo Instalado no Celular)
 
-### [12/09/2026] - Rebranding para Intima Lab e Ocultação de Acessos no Catálogo
+1. **Cliente acessando dois links de lojas diferentes (`/?store=loja-a` e `/?store=loja-b`)**:
+   - Cada link carrega no navegador a loja exata correspondente (catálogo próprio, cores, logo e WhatsApp daquela loja).
+   - Se a cliente instalar o aplicativo pelo link da Loja A, o ícone no celular abre o catálogo da Loja A.
+   - Caso a cliente receba no WhatsApp um link direto de outra loja (Loja B), ao tocar no link, o sistema abre imediatamente a Loja B, preservando o carrinho e a identidade de cada loja de forma isolada.
+
+2. **Lojista instalando o App com o link de admin (`/?admin=sua-loja`)**:
+   - Ao acessar seu link exclusivo e tocar em "Instalar Aplicativo", o app é adicionado à tela inicial do celular da lojista.
+   - Como ela realiza o login com a sua senha/PIN, a sessão segura fica salva no aparelho (`localStorage`).
+   - Ao tocar no ícone do aplicativo no celular, a lojista cai **direto dentro do seu painel administrativo**, com navegação em tela cheia idêntica a um app nativo, pronta para adicionar fotos, gerenciar estoque e ver pedidos.
+
+3. **Dono do App instalando o App com o link master (`/?superadmin=intimalab`)**:
+   - O Dono do App instala a partir do link master.
+   - Uma vez autenticado com a chave master, o ícone no celular abre direto a **Central Master Intima Lab**, permitindo monitorar todas as lojas, liberar lojistas bloqueados e alterar senhas de qualquer lugar.
+
+---
+
+## 6. Histórico de Alterações Recentes
+
+### [12/09/2026 - v2] - Correção Crítica de Isolamento no Link do Lojista
+- **Remoção da aba Super Admin no link do Lojista**: A lojista nunca mais tem acesso visual ou botão para alternar para a chave master do Dono do App.
+- **Remoção do Seletor de Lojas**: Ao acessar `/?admin=nome-da-loja`, a loja já vem pré-fixada e identificada. Não há mais dropdown listando as outras lojas da plataforma, garantindo sigilo comercial total entre lojistas.
+- **Login Direto sem Modal Intermediário**: A tela `/?admin=nome-da-loja` já apresenta diretamente o campo de senha daquela loja com o botão de olho para visibilidade e feedback de tentativas.
+- **Banner PWA Dinâmico**: Atualizado `PwaInstallBanner` para exibir dinamicamente o nome da boutique ativa em vez de texto estático.
+
+### [12/09/2026 - v1] - Rebranding para Intima Lab e Ocultação de Acessos no Catálogo
 - **Rebranding completo**: Atualizados `package.json`, `public/manifest.json`, `index.html`, `metadata.json`, `README.md` e `sw.js` para o nome oficial **Intima Lab**.
-- **Segurança da interface do cliente**: Removidos todos os elementos que davam acesso à Área do Lojista ou Super Admin da visão pública (seletor de lojas na barra superior, botões de cadeado na navbar e atalhos na gaveta mobile).
-- **Criação da documentação viva**: Criados `DOCUMENTACAO-PROJETO.md` e `AGENTS.md` para garantir que toda alteração futura parta do estado real e atualizado da aplicação.
+- **Segurança da interface do cliente**: Removidos todos os elementos que davam acesso à Área do Lojista ou Super Admin da visão pública.
+- **Criação da documentação viva**: Criados `DOCUMENTACAO-PROJETO.md` e `AGENTS.md`.
