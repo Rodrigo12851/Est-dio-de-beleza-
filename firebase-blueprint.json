@@ -1,106 +1,78 @@
 {
   "entities": {
-    "salon_config": {
-      "title": "Salon Configuration",
-      "description": "Studio settings, owner details, working hours, and policies",
+    "store_config": {
+      "title": "Store Configuration",
+      "description": "Lingerie e-commerce store settings, brand info, WhatsApp and payment settings",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
+        "tagline": { "type": "string" },
         "ownerName": { "type": "string" },
-        "avatar": { "type": "string" },
-        "bio": { "type": "string" },
         "phone": { "type": "string" },
         "whatsapp": { "type": "string" },
         "instagram": { "type": "string" },
         "address": { "type": "string" },
+        "pickupInstructions": { "type": "string" },
+        "pixKey": { "type": "string" },
+        "enableOnlinePayment": { "type": "boolean" },
+        "announcementBar": { "type": "string" },
         "adminPin": { "type": "string" },
-        "cancellationPolicy": { "type": "string" },
-        "workingHours": { "type": "object" },
-        "customDaysOff": { "type": "array" }
+        "logo": { "type": "string" },
+        "bannerImage": { "type": "string" }
       },
-      "required": ["name", "ownerName", "phone", "whatsapp", "address"]
+      "required": ["name", "whatsapp", "adminPin"]
     },
-    "procedures": {
-      "title": "Procedures",
-      "description": "Salon services and procedures catalogue",
+    "categories": {
+      "title": "Categories",
+      "description": "Lingerie product categories (e.g. Conjuntos, Sutiãs, Calcinhas, Noivas)",
       "type": "object",
       "properties": {
         "name": { "type": "string" },
-        "category": { "type": "string" },
-        "durationMinutes": { "type": "number" },
-        "price": { "type": "number" },
-        "description": { "type": "string" },
-        "photo": { "type": "string" },
-        "active": { "type": "boolean" },
-        "order": { "type": "number" }
+        "slug": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "order": { "type": "number" },
+        "isActive": { "type": "boolean" }
       },
-      "required": ["name", "category", "durationMinutes", "price", "active"]
+      "required": ["name", "slug", "isActive"]
     },
-    "appointments": {
-      "title": "Appointments",
-      "description": "Salon bookings and reservations",
+    "products": {
+      "title": "Products",
+      "description": "Lingerie & apparel catalog products",
       "type": "object",
       "properties": {
-        "clientName": { "type": "string" },
-        "clientPhone": { "type": "string" },
-        "clientNotes": { "type": "string" },
-        "procedureId": { "type": "string" },
-        "procedureName": { "type": "string" },
-        "procedureCategory": { "type": "string" },
-        "procedureIds": { "type": "array" },
-        "procedures": { "type": "array" },
-        "date": { "type": "string" },
-        "time": { "type": "string" },
-        "durationMinutes": { "type": "number" },
+        "categoryId": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
         "price": { "type": "number" },
-        "discount": { "type": "number" },
-        "finalPrice": { "type": "number" },
-        "status": { "type": "string" },
-        "isPaid": { "type": "boolean" },
-        "source": { "type": "string" },
+        "promoPrice": { "type": "number" },
+        "images": { "type": "array" },
+        "variants": { "type": "array" },
+        "isActive": { "type": "boolean" },
+        "featured": { "type": "boolean" },
         "createdAt": { "type": "string" }
       },
-      "required": ["clientName", "clientPhone", "date", "time", "durationMinutes", "price", "status"]
+      "required": ["categoryId", "name", "price", "images", "variants", "isActive"]
     },
-    "blocked_slots": {
-      "title": "Blocked Slots",
-      "description": "Custom blocked times and slots in the salon calendar",
+    "orders": {
+      "title": "Orders",
+      "description": "Customer orders received via WhatsApp checkout or store",
       "type": "object",
       "properties": {
-        "date": { "type": "string" },
-        "startTime": { "type": "string" },
-        "endTime": { "type": "string" },
-        "reason": { "type": "string" }
-      },
-      "required": ["date", "startTime", "endTime"]
-    },
-    "clients": {
-      "title": "Clients",
-      "description": "Client directory and history",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "phone": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerWhatsapp": { "type": "string" },
+        "deliveryType": { "type": "string" },
+        "address": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string" },
+        "paymentMethod": { "type": "string" },
         "notes": { "type": "string" },
-        "totalAppointments": { "type": "number" },
-        "totalSpent": { "type": "number" },
-        "lastVisit": { "type": "string" }
+        "createdAt": { "type": "string" }
       },
-      "required": ["name", "phone"]
-    },
-    "gallery": {
-      "title": "Gallery",
-      "description": "Portfolio work photos",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "category": { "type": "string" },
-        "photo": { "type": "string" },
-        "photos": { "type": "array" },
-        "featured": { "type": "boolean" },
-        "date": { "type": "string" }
-      },
-      "required": ["title", "category", "photo"]
+      "required": ["orderNumber", "customerName", "customerWhatsapp", "totalAmount", "status"]
     }
   }
 }

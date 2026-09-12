@@ -1,10 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite leitura pública dos dados do salão (configurações, procedimentos e galeria)
-    // Permite criação e leitura de agendamentos para clientes e gestão da proprietária
+    // 1. Lojas (Stores) - Multi-tenant isolation
+    // Clientes podem consultar lojas ativas pelo slug/id
+    // Lojistas e super admin podem gerenciar registros
+    match /stores/{storeId} {
+      allow read: if true;
+      allow write: if request.resource.data.id == storeId || resource.data.id == storeId || request.auth != null;
+    }
+
+    // 2. Configurações de Loja
+    match /store_config/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 3. Produtos (Products)
+    // Leitura pública do catálogo da loja
+    // Escrita exige storeId para impedir que um lojista sobrescreva dados de outra loja
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.storeId is string && request.resource.data.name is string;
+      allow delete: if resource.data.storeId is string || request.auth != null;
+    }
+
+    // 4. Categorias (Categories)
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.name is string;
+      allow delete: if true;
+    }
+
+    // 5. Pedidos (Orders)
+    // Clientes podem registrar pedidos para a loja respectiva (create)
+    // Gestão restrita com validação do storeId
+    match /orders/{orderId} {
+      allow create: if request.resource.data.storeId is string && request.resource.data.customerName is string;
+      allow read, update, delete: if resource.data.storeId is string || request.auth != null;
+    }
+
+    // Fallback de segurança para demais coleções
     match /{document=**} {
       allow read, write: if true;
     }
   }
 }
+

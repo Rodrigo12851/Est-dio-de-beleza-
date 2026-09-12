@@ -1,119 +1,138 @@
-export type ProcedureCategory = 'Cabelo' | 'Maquiagem' | 'Unhas' | 'Sobrancelhas' | 'Outros';
+export type DeliveryType = 'delivery' | 'pickup';
 
-export type AppointmentStatus = 'pendente' | 'confirmado' | 'concluido' | 'cancelado' | 'faltou';
+export type OrderStatus = 'pendente' | 'confirmado' | 'enviado' | 'concluido' | 'cancelado';
 
-export type PaymentMethod = 'pix' | 'dinheiro' | 'debito' | 'credito' | 'outro';
+export type PaymentMethod = 'whatsapp' | 'pix' | 'cartao_credito' | 'dinheiro';
 
-export interface Procedure {
+export type AppRoute = 'store' | 'merchant' | 'superadmin';
+
+export interface Category {
   id: string;
+  storeId?: string; // Multi-tenant isolation
   name: string;
-  category: ProcedureCategory;
-  description: string;
-  price: number;
-  durationMinutes: number;
-  photo: string;
-  active: boolean;
+  slug: string;
+  imageUrl: string;
+  order: number;
+  isActive: boolean;
 }
 
-export interface GalleryWork {
+export interface ProductVariant {
   id: string;
-  title: string;
-  category: ProcedureCategory;
+  productId: string;
+  size: string; // P, M, G, GG, 40, 42, 44, 46, Único
+  color: string; // Preto Clássico, Branco Noiva, Romance Rose, Vermelho Rubi, etc.
+  colorHex?: string; // #000000, #FFFFFF, #E3A857, etc.
+  stockQuantity: number;
+  sku?: string;
+}
+
+export interface Product {
+  id: string;
+  storeId?: string; // Multi-tenant isolation
+  categoryId: string;
+  name: string;
   description: string;
-  date: string;
-  photo: string;
-  photos?: string[];
+  price: number;
+  promoPrice?: number;
+  images: string[];
+  variants: ProductVariant[];
+  isActive: boolean;
   featured: boolean;
-  procedureId?: string;
+  createdAt: string;
+
+  // New Arrivals (Novidades no Catálogo)
+  isNewArrival?: boolean; // Marcar como novidade
+  newArrivalDays?: number; // Dias determinados que deve permanecer nas novidades
+  newArrivalUntil?: string; // Data limite calculada (ISO)
+  newArrivalBadge?: string; // Ex: 'Acabou de chegar no estoque', 'Lançamento'
 }
 
-export interface AppointmentProcedureItem {
-  id: string;
-  name: string;
-  category: ProcedureCategory;
-  price: number;
-  durationMinutes: number;
-  photo?: string;
+export interface CartItem {
+  id: string; // unique hash (productId + variantId)
+  product: Product;
+  variant: ProductVariant;
+  quantity: number;
+  unitPrice: number;
 }
 
-export interface Appointment {
+export interface DeliveryAddress {
+  zipCode: string; // CEP
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  variantId: string;
+  size: string;
+  color: string;
+  colorHex?: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  image: string;
+}
+
+export interface Order {
   id: string;
-  clientName: string;
-  clientPhone: string;
-  clientNotes?: string;
-  procedureId: string;
-  procedureName: string;
-  procedureCategory?: ProcedureCategory;
-  procedureIds?: string[];
-  procedures?: AppointmentProcedureItem[];
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
-  durationMinutes: number;
-  price: number;
+  storeId?: string; // Multi-tenant isolation
+  orderNumber: string; // ex: PED-8492
+  customerName: string;
+  customerWhatsapp: string;
+  deliveryType: DeliveryType;
+  address?: DeliveryAddress;
+  items: OrderItem[];
+  subtotal: number;
   discount: number;
-  finalPrice: number;
-  status: AppointmentStatus;
-  paymentMethod?: PaymentMethod;
-  isPaid: boolean;
-  source: 'online' | 'whatsapp' | 'presencial';
-  createdAt: string;
-  reminderSent?: boolean;
-  googleCalendarEventId?: string;
-}
-
-export interface BlockedSlot {
-  id: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:MM
-  endTime: string; // HH:MM
-  reason: string;
-}
-
-export interface ClientProfile {
-  id: string;
-  name: string;
-  phone: string;
-  notes: string;
+  totalAmount: number;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  notes?: string;
   createdAt: string;
 }
 
-export interface DaySchedule {
-  enabled: boolean;
-  start: string; // "08:00"
-  end: string;   // "19:00"
-}
-
-export interface GoogleCalendarConfig {
-  enabled: boolean;
-  autoSyncConfirmed: boolean;
-  connectedEmail?: string;
-  calendarId?: string; // default is 'primary'
-  lastSyncAt?: string;
-}
-
-export interface SalonConfig {
+export interface StoreConfig {
   name: string;
   tagline: string;
   ownerName: string;
-  bio: string;
-  avatar: string;
-  coverPhoto: string;
+  phone: string;
+  whatsapp: string; // digits only for wa.me, e.g. 5511999998888
+  instagram: string;
+  address: string;
+  pickupInstructions: string;
+  pixKey: string;
+  enableOnlinePayment: boolean; // Flag de Controle Global
+  announcementBar: string;
+  adminPin: string;
+  logo?: string;
+  bannerImage?: string;
+}
+
+export interface Store {
+  id: string;
+  slug: string;
+  name: string;
+  ownerName: string;
+  email?: string;
   phone: string;
   whatsapp: string;
-  address: string;
-  instagram: string;
-  workingHours: {
-    [dayOfWeek: number]: DaySchedule; // 0=Sunday, 1=Monday, ..., 6=Saturday
-  };
-  lunchBreak: {
-    enabled: boolean;
-    start: string; // "12:00"
-    end: string;   // "13:00"
-  };
-  offDays: string[]; // specific dates YYYY-MM-DD
-  holidays: string[]; // specific dates YYYY-MM-DD
-  cancellationPolicy: string;
-  whatsappConfirmationTemplate: string;
   adminPin: string;
-  googleCalendar?: GoogleCalendarConfig;
+  status: 'active' | 'suspended' | 'trial';
+  plan: 'standard' | 'pro' | 'enterprise';
+  createdAt: string;
+  config: StoreConfig;
 }
+
+export interface PlatformMetrics {
+  totalStores: number;
+  activeStores: number;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+

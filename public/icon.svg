@@ -1,7 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="128" fill="#8E5D52"/>
-  <circle cx="256" cy="256" r="180" fill="#784D43"/>
-  <path d="M256 120 C200 120 160 170 160 220 C160 290 256 380 256 380 C256 380 352 290 352 220 C352 170 312 120 256 120 Z" fill="#FDFBF9" opacity="0.95"/>
-  <path d="M256 170 C240 170 230 185 230 200 C230 225 256 260 256 260 C256 260 282 225 282 200 C282 185 272 170 256 170 Z" fill="#8E5D52"/>
-  <circle cx="256" cy="200" r="12" fill="#EAE4DD"/>
+  <rect width="512" height="512" rx="128" fill="#9B4B5A"/>
+  <circle cx="256" cy="256" r="200" fill="#843A48" opacity="0.6"/>
+  <!-- Elegant corset/lace lingerie outline -->
+  <path d="M190 140 C160 180 160 220 180 260 C200 300 220 330 256 380 C292 330 312 300 332 260 C352 220 352 180 322 140 C290 180 270 200 256 200 C242 200 222 180 190 140 Z" fill="#FDF7F8" stroke="#DDA8B3" stroke-width="6"/>
+  <!-- Bow & lace detail -->
+  <circle cx="256" cy="205" r="8" fill="#9B4B5A"/>
+  <path d="M256 205 Q235 220 230 240 M256 205 Q277 220 282 240" stroke="#9B4B5A" stroke-width="4" fill="none"/>
+  <!-- Straps -->
+  <path d="M190 140 Q180 100 195 70" stroke="#FDF7F8" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M322 140 Q332 100 317 70" stroke="#FDF7F8" stroke-width="6" stroke-linecap="round" fill="none"/>
 </svg>

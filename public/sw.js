@@ -1,5 +1,5 @@
-// Service Worker for Studio Bella Salon Notifications and PWA
-const CACHE_NAME = 'studio-bella-v1';
+// Service Worker for Bella Lingerie Notifications and PWA
+const CACHE_NAME = 'bella-lingerie-v1';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -12,8 +12,8 @@ self.addEventListener('activate', (event) => {
 // Handle incoming push notifications or background message
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'Novo Agendamento! 💕 Studio Bella',
-    body: 'Uma cliente acabou de realizar um agendamento.',
+    title: 'Novo Pedido Recebido! 🛍️ Bella Lingerie',
+    body: 'Uma cliente acabou de realizar um pedido no site.',
     url: '/',
   };
 
@@ -27,10 +27,10 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/icon.svg',
+    badge: '/icon.svg',
     vibrate: [300, 100, 300, 100, 300, 100, 500],
-    tag: data.tag || 'studio-bella-booking',
+    tag: data.tag || 'bella-lingerie-order',
     renotify: true,
     requireInteraction: true,
     data: {
@@ -38,7 +38,7 @@ self.addEventListener('push', (event) => {
       dateOfArrival: Date.now(),
     },
     actions: [
-      { action: 'open', title: '👁️ Ver Agendamento' }
+      { action: 'open', title: '🛍️ Ver Pedido' }
     ]
   };
 
@@ -66,3 +66,4 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+

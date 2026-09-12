@@ -1,150 +1,185 @@
 import React, { useState } from 'react';
-import { SalonProvider, useSalon } from './context/SalonContext';
-import { Procedure, GalleryWork } from './types';
-
-// Client components
-import { ClientNavbar } from './components/client/ClientNavbar';
-import { ClientHome } from './components/client/ClientHome';
-import { BookingFlowModal } from './components/client/BookingFlowModal';
-import { ProcedureDetailModal } from './components/client/ProcedureDetailModal';
-import { GalleryLightboxModal } from './components/client/GalleryLightboxModal';
-import { AdminLoginModal } from './components/client/AdminLoginModal';
-import { AppointmentNotificationBanner } from './components/common/AppointmentNotificationBanner';
-
-// Admin components
+import { StoreProvider, useStore } from './context/StoreContext';
+import { StoreNavbar } from './components/store/StoreNavbar';
+import { StoreView } from './components/store/StoreView';
+import { CartDrawer } from './components/store/CartDrawer';
+import { OrderConfirmationModal } from './components/store/OrderConfirmationModal';
+import { AdminLoginModal } from './components/store/AdminLoginModal';
+import { OrderNotificationBanner } from './components/store/OrderNotificationBanner';
+import { PwaInstallBanner } from './components/store/PwaInstallBanner';
 import { AdminLayout } from './components/admin/AdminLayout';
-import { AdminDashboard } from './components/admin/AdminDashboard';
-import { AdminCalendar } from './components/admin/AdminCalendar';
-import { AdminClients } from './components/admin/AdminClients';
-import { AdminProcedures } from './components/admin/AdminProcedures';
-import { AdminGallery } from './components/admin/AdminGallery';
-import { AdminFinancial } from './components/admin/AdminFinancial';
-import { AdminReports } from './components/admin/AdminReports';
-import { AdminSettings } from './components/admin/AdminSettings';
+import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
+import { Lock, Store, Shield, ArrowLeft } from 'lucide-react';
 
-const MainApp: React.FC = () => {
+const MainAppContent: React.FC = () => {
   const {
-    viewMode,
-    adminTab,
-    setAdminTab,
-    setViewMode,
-    isAdminAuthenticated,
-    lastCreatedAppointment,
-    clearNotification,
-  } = useSalon();
+    appRoute,
+    setAppRoute,
+    isMerchantAuthenticated,
+    isSuperAdminAuthenticated,
+    currentStore,
+    currentStoreId,
+  } = useStore();
 
-  // Modals for Client View
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [selectedBookingProcedure, setSelectedBookingProcedure] = useState<Procedure | null>(null);
-  const [selectedDetailProcedure, setSelectedDetailProcedure] = useState<Procedure | null>(null);
-  const [selectedGalleryWork, setSelectedGalleryWork] = useState<GalleryWork | null>(null);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [adminLoginInitialType, setAdminLoginInitialType] = useState<'merchant' | 'superadmin'>('merchant');
+  const [confirmedOrderData, setConfirmedOrderData] = useState<{
+    orderNumber: string;
+    whatsappUrl: string;
+  } | null>(null);
 
-  const handleStartBooking = (procedure?: Procedure) => {
-    if (procedure) {
-      setSelectedBookingProcedure(procedure);
-    } else {
-      setSelectedBookingProcedure(null);
-    }
-    setIsBookingOpen(true);
+  const handleOrderCompleted = (orderNumber: string, whatsappUrl: string) => {
+    setConfirmedOrderData({ orderNumber, whatsappUrl });
   };
 
-  const handleOpenProcedureDetail = (procedure: Procedure) => {
-    setSelectedDetailProcedure(procedure);
-  };
-
-  const handleOpenGalleryLightbox = (work: GalleryWork) => {
-    setSelectedGalleryWork(work);
-  };
-
-  const handleViewNotificationAppointment = () => {
-    if (isAdminAuthenticated) {
-      setViewMode('admin');
-      setAdminTab('calendar');
-    } else {
-      setIsAdminLoginOpen(true);
-    }
+  const handleOpenLogin = (type: 'merchant' | 'superadmin' = 'merchant') => {
+    setAdminLoginInitialType(type);
+    setIsAdminLoginOpen(true);
   };
 
   return (
     <>
-      {/* Real-time Ringtone Notification Banner for Owner */}
-      <AppointmentNotificationBanner
-        appointment={lastCreatedAppointment}
-        onClose={clearNotification}
-        onViewAppointment={handleViewNotificationAppointment}
-      />
+      {/* Real-time Order Notification Banner (Owner Alert on Top) */}
+      <OrderNotificationBanner />
 
-      {/* ADMIN VIEW - STRICTLY PROTECTED BY PIN AUTHENTICATION */}
-      {viewMode === 'admin' && isAdminAuthenticated ? (
-        <AdminLayout>
-          {adminTab === 'dashboard' && <AdminDashboard />}
-          {adminTab === 'calendar' && <AdminCalendar />}
-          {adminTab === 'clients' && <AdminClients />}
-          {adminTab === 'procedures' && <AdminProcedures />}
-          {adminTab === 'gallery' && <AdminGallery />}
-          {adminTab === 'financial' && <AdminFinancial />}
-          {adminTab === 'reports' && <AdminReports />}
-          {adminTab === 'settings' && <AdminSettings />}
-        </AdminLayout>
-      ) : (
-        /* PUBLIC CLIENT VIEW - ALWAYS DEFAULT FOR VISITORS AND SHARED LINKS */
-        <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#EAE4DD] selection:text-[#8E5D52]">
-          {/* Client Header Navbar */}
-          <ClientNavbar
-            onOpenBooking={() => handleStartBooking()}
-            onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
-          />
+      {/* ROTA 3: SUPER ADMIN PLATAFORMA (Master Governance) */}
+      {appRoute === 'superadmin' && (
+        isSuperAdminAuthenticated ? (
+          <SuperAdminDashboard />
+        ) : (
+          <div className="min-h-screen bg-[#1F1B18] text-[#EDE7DF] flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full bg-[#2A2522] border border-amber-500/30 rounded-3xl p-8 shadow-2xl text-center space-y-5">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                <Shield className="w-8 h-8" />
+              </div>
 
-          {/* Main Client Homepage */}
-          <ClientHome
-            onOpenBookingWithProcedure={handleStartBooking}
-            onOpenProcedureDetails={handleOpenProcedureDetail}
-            onOpenGalleryZoom={handleOpenGalleryLightbox}
-          />
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full">
+                  Área 3 • Super Admin
+                </span>
+                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-white">
+                  Controle Geral da Plataforma
+                </h2>
+                <p className="text-xs text-[#A89F91]">
+                  Acesso master reservado para você gerenciar todos os lojistas, limites e métricas globais.
+                </p>
+              </div>
 
-          {/* 5-Step Booking Flow Modal */}
-          <BookingFlowModal
-            isOpen={isBookingOpen}
-            onClose={() => setIsBookingOpen(false)}
-            initialProcedure={selectedBookingProcedure}
-          />
+              <div className="pt-2 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenLogin('superadmin')}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Inserir Chave Master</span>
+                </button>
 
-          {/* Procedure Detail Modal */}
-          <ProcedureDetailModal
-            procedure={selectedDetailProcedure}
-            onClose={() => setSelectedDetailProcedure(null)}
-            onBookProcedure={(proc) => {
-              setSelectedDetailProcedure(null);
-              handleStartBooking(proc);
-            }}
-          />
+                <button
+                  type="button"
+                  onClick={() => setAppRoute('store')}
+                  className="w-full py-2.5 text-xs text-[#A89F91] hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Voltar para o Catálogo Público</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
-          {/* Gallery Lightbox Modal */}
-          <GalleryLightboxModal
-            work={selectedGalleryWork}
-            onClose={() => setSelectedGalleryWork(null)}
-            onBookProcedure={(proc) => {
-              setSelectedGalleryWork(null);
-              handleStartBooking(proc);
-            }}
-          />
+      {/* ROTA 2: ÁREA ADMINISTRATIVA DO LOJISTA (Store-Scoped Merchant) */}
+      {appRoute === 'merchant' && (
+        isMerchantAuthenticated ? (
+          <AdminLayout />
+        ) : (
+          <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full bg-white border border-[#E8DFD5] rounded-3xl p-8 shadow-xl text-center space-y-5">
+              <div className="w-16 h-16 rounded-2xl bg-[#FAF3F5] border border-[#F0D5DC] flex items-center justify-center mx-auto text-[#9B4B5A]">
+                <Store className="w-8 h-8" />
+              </div>
 
-          {/* Admin PIN Login Modal */}
-          <AdminLoginModal
-            isOpen={isAdminLoginOpen}
-            onClose={() => setIsAdminLoginOpen(false)}
-          />
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9B4B5A] bg-[#FAF3F5] px-2.5 py-0.5 rounded-full">
+                  Área 2 • Lojista
+                </span>
+                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-[#2D2926]">
+                  Painel da Boutique ({currentStore?.name || 'Loja Ativa'})
+                </h2>
+                <p className="text-xs text-[#7D756D]">
+                  Acesso restrito ao proprietário da loja (ID: <strong className="font-mono text-[#9B4B5A]">{currentStoreId}</strong>). Ele enxerga somente os dados da própria loja.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleOpenLogin('merchant')}
+                  className="w-full py-3 bg-[#9B4B5A] hover:bg-[#843A48] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Digitar PIN da Loja</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAppRoute('store')}
+                  className="w-full py-2.5 text-xs text-[#7D756D] hover:text-[#2D2926] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Voltar para o Catálogo do Cliente</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      )}
+
+      {/* ROTA 1: ROTA PÚBLICA DO CLIENTE (Public E-Commerce & Catálogo de Novidades) */}
+      {appRoute === 'store' && (
+        <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#FAF3F5] selection:text-[#9B4B5A]">
+          {/* Top Navbar */}
+          <StoreNavbar onOpenAdminLogin={() => handleOpenLogin('merchant')} />
+
+          {/* PWA Install Banner */}
+          <PwaInstallBanner />
+
+          {/* Main Storefront & Catalog with Novidades */}
+          <StoreView />
         </div>
       )}
+
+      {/* Cart & Checkout Drawer */}
+      <CartDrawer onOrderCompleted={handleOrderCompleted} />
+
+      {/* Order Confirmation Celebratory Modal */}
+      {confirmedOrderData && (
+        <OrderConfirmationModal
+          orderNumber={confirmedOrderData.orderNumber}
+          whatsappUrl={confirmedOrderData.whatsappUrl}
+          onClose={() => setConfirmedOrderData(null)}
+        />
+      )}
+
+      {/* 2-Tier Admin Login Modal (Merchant vs Super Admin) */}
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onSuccess={() => {
+          // Handled within modal by calling setAppRoute
+        }}
+      />
     </>
   );
 };
 
-export default function App() {
+export function App() {
   return (
-    <SalonProvider>
-      <MainApp />
-    </SalonProvider>
+    <StoreProvider>
+      <MainAppContent />
+    </StoreProvider>
   );
 }
+
+export default App;

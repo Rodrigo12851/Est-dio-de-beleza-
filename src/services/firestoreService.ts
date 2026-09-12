@@ -11,34 +11,26 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { StoreConfig, Category, Product, Order, Store } from '../types';
 import {
-  SalonConfig,
-  Procedure,
-  GalleryWork,
-  Appointment,
-  BlockedSlot,
-  ClientProfile,
-} from '../types';
-import {
-  initialSalonConfig,
-  initialProcedures,
-  initialGalleryWorks,
-  initialAppointments,
-  initialBlockedSlots,
-  initialClients,
+  initialStoreConfig,
+  initialStores,
+  initialCategories,
+  initialProducts,
+  initialOrders,
 } from '../data/initialData';
 
 // Firestore Collection Names
 export const COLLECTIONS = {
-  CONFIG: 'salon_config',
-  PROCEDURES: 'procedures',
-  GALLERY: 'gallery',
-  APPOINTMENTS: 'appointments',
-  BLOCKED_SLOTS: 'blocked_slots',
-  CLIENTS: 'clients',
+  STORES: 'stores',
+  STORE_CONFIG: 'store_config',
+  CATEGORIES: 'categories',
+  PRODUCTS: 'products',
+  ORDERS: 'orders',
 };
 
 const CONFIG_DOC_ID = 'settings';
+export const DEFAULT_STORE_ID = 'store-bella';
 
 // Helper to remove undefined properties before saving to Firestore
 export function sanitizeData<T extends Record<string, any>>(data: T): T {
@@ -51,280 +43,320 @@ export function sanitizeData<T extends Record<string, any>>(data: T): T {
   return clean;
 }
 
-// 1. Config Sync
-export function subscribeToSalonConfig(
-  onData: (config: SalonConfig) => void,
+// ==========================================
+// 0. Multi-Tenant Stores Management
+// ==========================================
+export function subscribeToStores(
+  onData: (stores: Store[]) => void,
   onError?: (err: any) => void
 ): Unsubscribe {
-  const configDocRef = doc(db, COLLECTIONS.CONFIG, CONFIG_DOC_ID);
-  
+  const colRef = collection(db, COLLECTIONS.STORES);
+
+  return onSnapshot(
+    colRef,
+    (snap) => {
+      if (snap.empty) {
+        seedStores().catch(console.error);
+        onData(initialStores);
+      } else {
+        const list: Store[] = [];
+        snap.forEach((d) => {
+          list.push({ id: d.id, ...(d.data() as Omit<Store, 'id'>) });
+        });
+        list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        onData(list);
+      }
+    },
+    (err) => {
+      console.warn('Firestore stores subscription error (offline fallback):', err);
+      onData(initialStores);
+      if (onError) onError(err);
+    }
+  );
+}
+
+export async function seedStores(): Promise<void> {
+  const batch = writeBatch(db);
+  for (const store of initialStores) {
+    const docRef = doc(db, COLLECTIONS.STORES, store.id);
+    batch.set(docRef, sanitizeData(store));
+  }
+  await batch.commit();
+}
+
+export async function saveStoreToDb(store: Store): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.STORES, store.id);
+  await setDoc(docRef, sanitizeData(store), { merge: true });
+}
+
+export async function deleteStoreFromDb(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.STORES, id);
+  await deleteDoc(docRef);
+}
+
+// ==========================================
+// 1. Store Config Sync (Per-Store or Legacy)
+// ==========================================
+export function subscribeToStoreConfig(
+  storeId: string = DEFAULT_STORE_ID,
+  onData: (config: StoreConfig) => void,
+  onError?: (err: any) => void
+): Unsubscribe {
+  // If store-bella, maintain backwards-compatibility with legacy doc
+  const configDocRef =
+    storeId === DEFAULT_STORE_ID
+      ? doc(db, COLLECTIONS.STORE_CONFIG, CONFIG_DOC_ID)
+      : doc(db, COLLECTIONS.STORE_CONFIG, storeId);
+
   return onSnapshot(
     configDocRef,
     (snap) => {
       if (snap.exists()) {
-        onData(snap.data() as SalonConfig);
+        onData(snap.data() as StoreConfig);
       } else {
-        // Seed initial config to database if it doesn't exist
-        setDoc(configDocRef, sanitizeData(initialSalonConfig)).catch(console.error);
-        onData(initialSalonConfig);
+        const fallbackConfig =
+          initialStores.find((s) => s.id === storeId)?.config || initialStoreConfig;
+        setDoc(configDocRef, sanitizeData(fallbackConfig)).catch(console.error);
+        onData(fallbackConfig);
       }
     },
     (err) => {
       console.warn('Firestore config subscription error:', err);
+      const fallbackConfig =
+        initialStores.find((s) => s.id === storeId)?.config || initialStoreConfig;
+      onData(fallbackConfig);
       if (onError) onError(err);
     }
   );
 }
 
-export async function saveSalonConfigToDb(newConfig: SalonConfig): Promise<void> {
-  const configDocRef = doc(db, COLLECTIONS.CONFIG, CONFIG_DOC_ID);
+export async function saveStoreConfigToDb(
+  newConfig: StoreConfig,
+  storeId: string = DEFAULT_STORE_ID
+): Promise<void> {
+  const configDocRef =
+    storeId === DEFAULT_STORE_ID
+      ? doc(db, COLLECTIONS.STORE_CONFIG, CONFIG_DOC_ID)
+      : doc(db, COLLECTIONS.STORE_CONFIG, storeId);
+
   await setDoc(configDocRef, sanitizeData(newConfig), { merge: true });
+
+  // Also update store document config if exists
+  const storeDocRef = doc(db, COLLECTIONS.STORES, storeId);
+  try {
+    await setDoc(storeDocRef, { config: sanitizeData(newConfig) }, { merge: true });
+  } catch {
+    // optional sync
+  }
 }
 
-// 2. Procedures Sync
-export function subscribeToProcedures(
-  onData: (procedures: Procedure[]) => void,
+// ==========================================
+// 2. Categories Sync (Multi-Tenant)
+// ==========================================
+export function subscribeToCategories(
+  storeId: string = DEFAULT_STORE_ID,
+  onData: (categories: Category[]) => void,
   onError?: (err: any) => void
 ): Unsubscribe {
-  const colRef = collection(db, COLLECTIONS.PROCEDURES);
+  const colRef = collection(db, COLLECTIONS.CATEGORIES);
 
   return onSnapshot(
     colRef,
     (snap) => {
       if (snap.empty) {
-        // Seed initial procedures
-        seedProcedures().catch(console.error);
-        onData(initialProcedures);
+        seedCategories().catch(console.error);
+        onData(initialCategories.filter((c) => !c.storeId || c.storeId === storeId));
       } else {
-        const list: Procedure[] = [];
+        const list: Category[] = [];
         snap.forEach((d) => {
-          list.push({ id: d.id, ...(d.data() as Omit<Procedure, 'id'>) });
+          list.push({ id: d.id, ...(d.data() as Omit<Category, 'id'>) });
         });
-        onData(list);
+
+        // Filter by storeId or allow all if superadmin ('*')
+        const filtered =
+          storeId === '*'
+            ? list
+            : list.filter(
+                (c) =>
+                  c.storeId === storeId || (!c.storeId && storeId === DEFAULT_STORE_ID)
+              );
+
+        filtered.sort((a, b) => a.order - b.order);
+        onData(filtered);
       }
     },
     (err) => {
-      console.warn('Firestore procedures subscription error:', err);
+      console.warn('Firestore categories subscription error:', err);
+      onData(initialCategories.filter((c) => !c.storeId || c.storeId === storeId));
       if (onError) onError(err);
     }
   );
 }
 
-export async function seedProcedures(): Promise<void> {
+export async function seedCategories(): Promise<void> {
   const batch = writeBatch(db);
-  for (const proc of initialProcedures) {
-    const docRef = doc(db, COLLECTIONS.PROCEDURES, proc.id);
-    batch.set(docRef, sanitizeData(proc));
+  for (const cat of initialCategories) {
+    const docRef = doc(db, COLLECTIONS.CATEGORIES, cat.id);
+    batch.set(docRef, sanitizeData({ ...cat, storeId: cat.storeId || DEFAULT_STORE_ID }));
   }
   await batch.commit();
 }
 
-export async function saveProcedureToDb(procedure: Procedure): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.PROCEDURES, procedure.id);
-  await setDoc(docRef, sanitizeData(procedure));
+export async function saveCategoryToDb(category: Category, storeId: string = DEFAULT_STORE_ID): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.CATEGORIES, category.id);
+  const data = sanitizeData({
+    ...category,
+    storeId: category.storeId || storeId,
+  });
+  await setDoc(docRef, data);
 }
 
-export async function deleteProcedureFromDb(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.PROCEDURES, id);
+export async function deleteCategoryFromDb(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.CATEGORIES, id);
   await deleteDoc(docRef);
 }
 
-// 3. Gallery Sync
-export function subscribeToGallery(
-  onData: (gallery: GalleryWork[]) => void,
+// ==========================================
+// 3. Products Sync (Multi-Tenant + Novidades)
+// ==========================================
+export function subscribeToProducts(
+  storeId: string = DEFAULT_STORE_ID,
+  onData: (products: Product[]) => void,
   onError?: (err: any) => void
 ): Unsubscribe {
-  const colRef = collection(db, COLLECTIONS.GALLERY);
+  const colRef = collection(db, COLLECTIONS.PRODUCTS);
 
   return onSnapshot(
     colRef,
     (snap) => {
       if (snap.empty) {
-        seedGallery().catch(console.error);
-        onData(initialGalleryWorks);
+        seedProducts().catch(console.error);
+        onData(initialProducts.filter((p) => !p.storeId || p.storeId === storeId));
       } else {
-        const list: GalleryWork[] = [];
+        const list: Product[] = [];
         snap.forEach((d) => {
-          list.push({ id: d.id, ...(d.data() as Omit<GalleryWork, 'id'>) });
+          list.push({ id: d.id, ...(d.data() as Omit<Product, 'id'>) });
         });
-        onData(list);
+
+        // Multi-tenant store isolation filter
+        const filtered =
+          storeId === '*'
+            ? list
+            : list.filter(
+                (p) =>
+                  p.storeId === storeId || (!p.storeId && storeId === DEFAULT_STORE_ID)
+              );
+
+        onData(filtered);
       }
     },
     (err) => {
-      console.warn('Firestore gallery subscription error:', err);
+      console.warn('Firestore products subscription error:', err);
+      onData(initialProducts.filter((p) => !p.storeId || p.storeId === storeId));
       if (onError) onError(err);
     }
   );
 }
 
-export async function seedGallery(): Promise<void> {
+export async function seedProducts(): Promise<void> {
   const batch = writeBatch(db);
-  for (const work of initialGalleryWorks) {
-    const docRef = doc(db, COLLECTIONS.GALLERY, work.id);
-    batch.set(docRef, sanitizeData(work));
+  for (const prod of initialProducts) {
+    const docRef = doc(db, COLLECTIONS.PRODUCTS, prod.id);
+    batch.set(docRef, sanitizeData({ ...prod, storeId: prod.storeId || DEFAULT_STORE_ID }));
   }
   await batch.commit();
 }
 
-export async function saveGalleryWorkToDb(work: GalleryWork): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.GALLERY, work.id);
-  await setDoc(docRef, sanitizeData(work));
+export async function saveProductToDb(product: Product, storeId: string = DEFAULT_STORE_ID): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.PRODUCTS, product.id);
+  const data = sanitizeData({
+    ...product,
+    storeId: product.storeId || storeId,
+  });
+  await setDoc(docRef, data);
 }
 
-export async function deleteGalleryWorkFromDb(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.GALLERY, id);
+export async function deleteProductFromDb(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.PRODUCTS, id);
   await deleteDoc(docRef);
 }
 
-// 4. Appointments Sync
-export function subscribeToAppointments(
-  onData: (appointments: Appointment[]) => void,
+// ==========================================
+// 4. Orders Sync (Multi-Tenant Isolation)
+// ==========================================
+export function subscribeToOrders(
+  storeId: string = DEFAULT_STORE_ID,
+  onData: (orders: Order[]) => void,
   onError?: (err: any) => void
 ): Unsubscribe {
-  const colRef = collection(db, COLLECTIONS.APPOINTMENTS);
+  const colRef = collection(db, COLLECTIONS.ORDERS);
 
   return onSnapshot(
     colRef,
     (snap) => {
       if (snap.empty) {
-        seedAppointments().catch(console.error);
-        onData(initialAppointments);
+        seedOrders().catch(console.error);
+        onData(initialOrders.filter((o) => !o.storeId || o.storeId === storeId));
       } else {
-        const list: Appointment[] = [];
+        const list: Order[] = [];
         snap.forEach((d) => {
-          list.push({ id: d.id, ...(d.data() as Omit<Appointment, 'id'>) });
+          list.push({ id: d.id, ...(d.data() as Omit<Order, 'id'>) });
         });
-        // Sort by date and time descending
-        list.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
-        onData(list);
+
+        // Multi-tenant store isolation filter
+        const filtered =
+          storeId === '*'
+            ? list
+            : list.filter(
+                (o) =>
+                  o.storeId === storeId || (!o.storeId && storeId === DEFAULT_STORE_ID)
+              );
+
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        onData(filtered);
       }
     },
     (err) => {
-      console.warn('Firestore appointments subscription error:', err);
+      console.warn('Firestore orders subscription error:', err);
+      onData(initialOrders.filter((o) => !o.storeId || o.storeId === storeId));
       if (onError) onError(err);
     }
   );
 }
 
-export async function seedAppointments(): Promise<void> {
+export async function seedOrders(): Promise<void> {
   const batch = writeBatch(db);
-  for (const apt of initialAppointments) {
-    const docRef = doc(db, COLLECTIONS.APPOINTMENTS, apt.id);
-    batch.set(docRef, sanitizeData(apt));
+  for (const ord of initialOrders) {
+    const docRef = doc(db, COLLECTIONS.ORDERS, ord.id);
+    batch.set(docRef, sanitizeData({ ...ord, storeId: ord.storeId || DEFAULT_STORE_ID }));
   }
   await batch.commit();
 }
 
-export async function saveAppointmentToDb(appointment: Appointment): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.APPOINTMENTS, appointment.id);
-  await setDoc(docRef, sanitizeData(appointment));
+export async function saveOrderToDb(order: Order, storeId: string = DEFAULT_STORE_ID): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.ORDERS, order.id);
+  const data = sanitizeData({
+    ...order,
+    storeId: order.storeId || storeId,
+  });
+  await setDoc(docRef, data);
 }
 
-export async function updateAppointmentInDb(id: string, updates: Partial<Appointment>): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.APPOINTMENTS, id);
-  await updateDoc(docRef, sanitizeData(updates));
+export async function updateOrderStatusInDb(id: string, status: Order['status']): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.ORDERS, id);
+  await updateDoc(docRef, { status });
 }
 
-export async function deleteAppointmentFromDb(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.APPOINTMENTS, id);
+export async function deleteOrderFromDb(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTIONS.ORDERS, id);
   await deleteDoc(docRef);
 }
 
-// 5. Blocked Slots Sync
-export function subscribeToBlockedSlots(
-  onData: (slots: BlockedSlot[]) => void,
-  onError?: (err: any) => void
-): Unsubscribe {
-  const colRef = collection(db, COLLECTIONS.BLOCKED_SLOTS);
-
-  return onSnapshot(
-    colRef,
-    (snap) => {
-      if (snap.empty) {
-        seedBlockedSlots().catch(console.error);
-        onData(initialBlockedSlots);
-      } else {
-        const list: BlockedSlot[] = [];
-        snap.forEach((d) => {
-          list.push({ id: d.id, ...(d.data() as Omit<BlockedSlot, 'id'>) });
-        });
-        onData(list);
-      }
-    },
-    (err) => {
-      console.warn('Firestore blocked slots subscription error:', err);
-      if (onError) onError(err);
-    }
-  );
-}
-
-export async function seedBlockedSlots(): Promise<void> {
-  const batch = writeBatch(db);
-  for (const slot of initialBlockedSlots) {
-    const docRef = doc(db, COLLECTIONS.BLOCKED_SLOTS, slot.id);
-    batch.set(docRef, sanitizeData(slot));
-  }
-  await batch.commit();
-}
-
-export async function saveBlockedSlotToDb(slot: BlockedSlot): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.BLOCKED_SLOTS, slot.id);
-  await setDoc(docRef, sanitizeData(slot));
-}
-
-export async function deleteBlockedSlotFromDb(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.BLOCKED_SLOTS, id);
-  await deleteDoc(docRef);
-}
-
-// 6. Clients Sync
-export function subscribeToClients(
-  onData: (clients: ClientProfile[]) => void,
-  onError?: (err: any) => void
-): Unsubscribe {
-  const colRef = collection(db, COLLECTIONS.CLIENTS);
-
-  return onSnapshot(
-    colRef,
-    (snap) => {
-      if (snap.empty) {
-        seedClients().catch(console.error);
-        onData(initialClients);
-      } else {
-        const list: ClientProfile[] = [];
-        snap.forEach((d) => {
-          list.push({ id: d.id, ...(d.data() as Omit<ClientProfile, 'id'>) });
-        });
-        onData(list);
-      }
-    },
-    (err) => {
-      console.warn('Firestore clients subscription error:', err);
-      if (onError) onError(err);
-    }
-  );
-}
-
-export async function seedClients(): Promise<void> {
-  const batch = writeBatch(db);
-  for (const client of initialClients) {
-    const docRef = doc(db, COLLECTIONS.CLIENTS, client.id);
-    batch.set(docRef, sanitizeData(client));
-  }
-  await batch.commit();
-}
-
-export async function saveClientToDb(client: ClientProfile): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.CLIENTS, client.id);
-  await setDoc(docRef, sanitizeData(client));
-}
-
-// Reset / Re-seed all collections
+// Reset data in DB for testing
 export async function resetAllDataInDb(): Promise<void> {
-  await saveSalonConfigToDb(initialSalonConfig);
-  await seedProcedures();
-  await seedGallery();
-  await seedAppointments();
-  await seedBlockedSlots();
-  await seedClients();
+  await seedStores();
+  await saveStoreConfigToDb(initialStoreConfig, DEFAULT_STORE_ID);
+  await seedCategories();
+  await seedProducts();
+  await seedOrders();
 }
