@@ -1,5 +1,5 @@
-// Service Worker for Bella Lingerie Notifications and PWA
-const CACHE_NAME = 'bella-lingerie-v1';
+// Service Worker for Intima Lab Notifications and PWA
+const CACHE_NAME = 'intima-lab-v1';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -12,7 +12,7 @@ self.addEventListener('activate', (event) => {
 // Handle incoming push notifications or background message
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'Novo Pedido Recebido! 🛍️ Bella Lingerie',
+    title: 'Novo Pedido Recebido! 🛍️ Intima Lab',
     body: 'Uma cliente acabou de realizar um pedido no site.',
     url: '/',
   };
@@ -30,7 +30,7 @@ self.addEventListener('push', (event) => {
     icon: '/icon.svg',
     badge: '/icon.svg',
     vibrate: [300, 100, 300, 100, 300, 100, 500],
-    tag: data.tag || 'bella-lingerie-order',
+    tag: data.tag || 'intima-lab-order',
     renotify: true,
     requireInteraction: true,
     data: {

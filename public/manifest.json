@@ -1,7 +1,7 @@
 {
-  "name": "Bella Lingerie - Moda Íntima",
-  "short_name": "Bella Lingerie",
-  "description": "Catálogo de Lingerie, Moda Íntima e Pedidos pelo WhatsApp",
+  "name": "Intima Lab - Moda Íntima & Lingerie",
+  "short_name": "Intima Lab",
+  "description": "Plataforma multi-lojas Intima Lab para gestão e venda de moda íntima",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FDFBF9",
