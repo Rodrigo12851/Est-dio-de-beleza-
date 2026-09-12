@@ -1,6 +1,6 @@
 {
-  "name": "Bella Lingerie - Moda Íntima & PWA",
-  "description": "E-commerce e PWA de moda íntima e lingerie com catálogo por tamanho e cor, checkout direto no WhatsApp e painel administrativo com controle de estoque.",
+  "name": "Allure Intimidades - Moda Íntima & Boutique Dark",
+  "description": "E-commerce e PWA Allure Intimidades com catálogo inteligente por tamanho e cor, catálogo de novidades com expiração automática, IA de color matching e checkout desativado para consulta.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

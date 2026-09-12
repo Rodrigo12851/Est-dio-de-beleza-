@@ -9,6 +9,7 @@ import {
   StoreConfig,
   Store,
   AppRoute,
+  StorePalette,
 } from '../types';
 import {
   subscribeToStores,
@@ -132,6 +133,10 @@ interface StoreContextType {
   updateConfig: (newConfig: Partial<StoreConfig>) => Promise<void>;
   resetToDefaults: () => Promise<void>;
 
+  // Theme & Color Palette Selection
+  palette: StorePalette;
+  setPalette: (palette: StorePalette) => void;
+
   // Live order alert for owner
   lastCreatedOrder: Order | null;
   clearOrderNotification: () => void;
@@ -171,6 +176,24 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.CURRENT_STORE_ID);
     return saved || DEFAULT_STORE_ID;
   });
+
+  // User Theme / Palette state (Dark Allure, Boutique Rosé & Nude de antes, Champanhe, Sensual Rouge)
+  const [palette, setPaletteState] = useState<StorePalette>(() => {
+    const saved = localStorage.getItem('allure_selected_palette');
+    if (saved === 'dark-allure' || saved === 'light-rose' || saved === 'champagne' || saved === 'rouge') {
+      return saved as StorePalette;
+    }
+    return 'dark-allure';
+  });
+
+  const setPalette = (newPalette: StorePalette) => {
+    setPaletteState(newPalette);
+    localStorage.setItem('allure_selected_palette', newPalette);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', palette);
+  }, [palette]);
 
   const selectStore = (storeId: string) => {
     setCurrentStoreId(storeId);
@@ -738,6 +761,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         resetToDefaults,
         lastCreatedOrder,
         clearOrderNotification,
+        palette,
+        setPalette,
       }}
     >
       {children}

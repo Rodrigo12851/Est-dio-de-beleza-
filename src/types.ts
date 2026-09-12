@@ -6,6 +6,8 @@ export type PaymentMethod = 'whatsapp' | 'pix' | 'cartao_credito' | 'dinheiro';
 
 export type AppRoute = 'store' | 'merchant' | 'superadmin';
 
+export type StorePalette = 'dark-allure' | 'light-rose' | 'champagne' | 'rouge';
+
 export interface Category {
   id: string;
   storeId?: string; // Multi-tenant isolation

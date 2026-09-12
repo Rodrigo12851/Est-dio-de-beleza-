@@ -47,21 +47,21 @@ const MainAppContent: React.FC = () => {
         isSuperAdminAuthenticated ? (
           <SuperAdminDashboard />
         ) : (
-          <div className="min-h-screen bg-[#1F1B18] text-[#EDE7DF] flex flex-col items-center justify-center p-4">
-            <div className="max-w-md w-full bg-[#2A2522] border border-amber-500/30 rounded-3xl p-8 shadow-2xl text-center space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+          <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full bg-[#161616] border border-[#D8A47F]/40 rounded-3xl p-8 shadow-2xl text-center space-y-5">
+              <div className="w-16 h-16 rounded-2xl bg-[#1F1F1F] border border-[#D8A47F]/40 flex items-center justify-center mx-auto text-[#D8A47F]">
                 <Shield className="w-8 h-8" />
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#D8A47F] bg-[#1F1F1F] border border-[#D8A47F]/30 px-2.5 py-0.5 rounded-full">
                   Área 3 • Super Admin
                 </span>
-                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-white">
+                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-[#F8F5F2]">
                   Controle Geral da Plataforma
                 </h2>
-                <p className="text-xs text-[#A89F91]">
-                  Acesso master reservado para você gerenciar todos os lojistas, limites e métricas globais.
+                <p className="text-xs text-[#A0A0A0]">
+                  Acesso master reservado para gerenciar todos os lojistas, permissões e métricas globais.
                 </p>
               </div>
 
@@ -69,7 +69,7 @@ const MainAppContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenLogin('superadmin')}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                  className="w-full py-3 bg-[#D8A47F] hover:bg-[#C8946F] text-[#121212] font-black rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
                   <span>Inserir Chave Master</span>
@@ -78,7 +78,7 @@ const MainAppContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAppRoute('store')}
-                  className="w-full py-2.5 text-xs text-[#A89F91] hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-2.5 text-xs text-[#A0A0A0] hover:text-[#F8F5F2] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Voltar para o Catálogo Público</span>
@@ -94,21 +94,21 @@ const MainAppContent: React.FC = () => {
         isMerchantAuthenticated ? (
           <AdminLayout />
         ) : (
-          <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col items-center justify-center p-4">
-            <div className="max-w-md w-full bg-white border border-[#E8DFD5] rounded-3xl p-8 shadow-xl text-center space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF3F5] border border-[#F0D5DC] flex items-center justify-center mx-auto text-[#9B4B5A]">
+          <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full bg-[#161616] border border-[#2A2A2A] rounded-3xl p-8 shadow-xl text-center space-y-5">
+              <div className="w-16 h-16 rounded-2xl bg-[#1F1F1F] border border-[#C75C5C]/40 flex items-center justify-center mx-auto text-[#C75C5C]">
                 <Store className="w-8 h-8" />
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#9B4B5A] bg-[#FAF3F5] px-2.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C75C5C] bg-[#1F1F1F] border border-[#C75C5C]/30 px-2.5 py-0.5 rounded-full">
                   Área 2 • Lojista
                 </span>
-                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-[#2D2926]">
+                <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-[#F8F5F2]">
                   Painel da Boutique ({currentStore?.name || 'Loja Ativa'})
                 </h2>
-                <p className="text-xs text-[#7D756D]">
-                  Acesso restrito ao proprietário da loja (ID: <strong className="font-mono text-[#9B4B5A]">{currentStoreId}</strong>). Ele enxerga somente os dados da própria loja.
+                <p className="text-xs text-[#A0A0A0]">
+                  Acesso restrito ao proprietário da loja (ID: <strong className="font-mono text-[#D8A47F]">{currentStoreId}</strong>). Ele enxerga somente os dados da própria loja.
                 </p>
               </div>
 
@@ -116,7 +116,7 @@ const MainAppContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenLogin('merchant')}
-                  className="w-full py-3 bg-[#9B4B5A] hover:bg-[#843A48] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                  className="w-full py-3 bg-[#C75C5C] hover:bg-[#B34E4E] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
                   <span>Digitar PIN da Loja</span>
@@ -125,7 +125,7 @@ const MainAppContent: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setAppRoute('store')}
-                  className="w-full py-2.5 text-xs text-[#7D756D] hover:text-[#2D2926] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-2.5 text-xs text-[#A0A0A0] hover:text-[#F8F5F2] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Voltar para o Catálogo do Cliente</span>
@@ -138,7 +138,7 @@ const MainAppContent: React.FC = () => {
 
       {/* ROTA 1: ROTA PÚBLICA DO CLIENTE (Public E-Commerce & Catálogo de Novidades) */}
       {appRoute === 'store' && (
-        <div className="min-h-screen bg-[#FDFBF9] text-[#2D2926] flex flex-col font-sans selection:bg-[#FAF3F5] selection:text-[#9B4B5A]">
+        <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col font-sans selection:bg-[#C75C5C] selection:text-white">
           {/* Top Navbar */}
           <StoreNavbar onOpenAdminLogin={() => handleOpenLogin('merchant')} />
 

@@ -1,17 +1,17 @@
 import { Category, Product, Order, StoreConfig, Store } from '../types';
 
 export const initialStoreConfig: StoreConfig = {
-  name: 'Bella Lingerie',
-  tagline: 'Sofisticação, conforto e sensualidade em cada detalhe',
-  ownerName: 'Isabella Rocha',
+  name: 'Allure Intimidades',
+  tagline: 'Elegância, conforto e autoestima em alta costura íntima',
+  ownerName: 'Direção Allure',
   phone: '(11) 98765-4321',
   whatsapp: '5511987654321',
-  instagram: '@bellalingerie.oficial',
+  instagram: '@allure.intimidades',
   address: 'Rua Oscar Freire, 1140 - Jardins, São Paulo - SP',
-  pickupInstructions: 'Retirada gratuita em nossa boutique em até 2 horas úteis após confirmação do pedido.',
-  pixKey: 'contato@bellalingerie.com.br',
-  enableOnlinePayment: false, // PRD 3.2: Flag de Controle Global (padrão false: checkout via WhatsApp)
-  announcementBar: '✨ FRETE GRÁTIS PARA TODO O BRASIL EM COMPRAS ACIMA DE R$ 199 | ATÉ 6X SEM JUROS',
+  pickupInstructions: 'Retirada gratuita em nosso showroom Allure em até 2 horas úteis após confirmação.',
+  pixKey: 'contato@allureintimidades.com.br',
+  enableOnlinePayment: false, // Estrutura mantida / processamento direto via WhatsApp conforme PRD
+  announcementBar: '✨ ALLURE INTIMIDADES • FRETE GRÁTIS ACIMA DE R$ 199 | ATÉ 6X SEM JUROS | DESIGN SYSTEM DARK',
   adminPin: '1234',
   logo: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&q=80&w=400',
   bannerImage: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1400',
@@ -20,15 +20,15 @@ export const initialStoreConfig: StoreConfig = {
 export const initialStores: Store[] = [
   {
     id: 'store-bella',
-    slug: 'bella-lingerie',
-    name: 'Bella Lingerie',
-    ownerName: 'Isabella Rocha',
-    email: 'isabella@bellalingerie.com.br',
+    slug: 'allure-intimidades',
+    name: 'Allure Intimidades',
+    ownerName: 'Direção Allure',
+    email: 'contato@allureintimidades.com.br',
     phone: '(11) 98765-4321',
     whatsapp: '5511987654321',
     adminPin: '1234',
     status: 'active',
-    plan: 'pro',
+    plan: 'enterprise',
     createdAt: '2026-08-01T10:00:00Z',
     config: initialStoreConfig,
   },

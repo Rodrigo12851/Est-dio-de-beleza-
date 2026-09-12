@@ -52,14 +52,14 @@ export const PwaInstallBanner: React.FC = () => {
   if (isInstalled || isDismissed) return null;
 
   return (
-    <div className="bg-[#FAF3F5] border-b border-[#F0D5DC] px-4 py-2.5 sm:px-6">
+    <div className="bg-[#1F1F1F] border-b border-[#2A2A2A] px-4 py-2.5 sm:px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-full bg-[#9B4B5A] text-white flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-full bg-[#C75C5C] text-white flex items-center justify-center shrink-0 shadow-xs">
             <Smartphone className="w-3.5 h-3.5" />
           </div>
-          <p className="text-[#4A3B3E] truncate">
-            <strong className="font-semibold text-[#2D2426]">Instale o App Bella Lingerie:</strong> Acesso rápido da sua tela inicial e navegação fluida.
+          <p className="text-[#A0A0A0] truncate">
+            <strong className="font-semibold text-[#F8F5F2]">Instale o App Allure Intimidades:</strong> Acesso instantâneo com experiência exclusiva de boutique.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export const PwaInstallBanner: React.FC = () => {
           <button
             type="button"
             onClick={handleInstallClick}
-            className="px-3 py-1 bg-[#9B4B5A] hover:bg-[#843A48] text-white rounded-full font-semibold text-[11px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+            className="px-3 py-1 bg-[#D8A47F] hover:bg-[#C8946F] text-[#121212] font-black rounded-full text-[11px] flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
           >
             <Download className="w-3 h-3" />
             <span>Instalar App</span>
@@ -75,7 +75,7 @@ export const PwaInstallBanner: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsDismissed(true)}
-            className="p-1 text-[#8A7A7E] hover:text-[#2D2426] cursor-pointer"
+            className="p-1 text-[#8A8A8A] hover:text-[#F8F5F2] cursor-pointer"
             aria-label="Fechar aviso"
           >
             <X className="w-3.5 h-3.5" />

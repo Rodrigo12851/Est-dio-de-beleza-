@@ -1,6 +1,77 @@
 @import "tailwindcss";
 
+:root,
+[data-theme="dark-allure"] {
+  --color-preto-noite: #121212;
+  --color-cinza-chumbo: #1F1F1F;
+  --color-cinza-chumbo-border: #2A2A2A;
+  --color-off-white: #F8F5F2;
+  --color-champanhe-rose: #D8A47F;
+  --color-rosa-allure: #C75C5C;
+  --bg-main: #121212;
+  --bg-card: #1F1F1F;
+  --bg-subtle: #181818;
+  --border-main: #2A2A2A;
+  --text-main: #F8F5F2;
+  --text-muted: #A89F91;
+  --accent-main: #D8A47F;
+  --cta-main: #C75C5C;
+}
+
+[data-theme="light-rose"] {
+  --color-preto-noite: #FAF7F5;
+  --color-cinza-chumbo: #FFFFFF;
+  --color-cinza-chumbo-border: #E8E1DA;
+  --color-off-white: #2D2926;
+  --color-champanhe-rose: #9B4B5A;
+  --color-rosa-allure: #C75C5C;
+  --bg-main: #FAF7F5;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #F5EFEB;
+  --border-main: #E8E1DA;
+  --text-main: #2D2926;
+  --text-muted: #7A7067;
+  --accent-main: #9B4B5A;
+  --cta-main: #C75C5C;
+}
+
+[data-theme="champagne"] {
+  --color-preto-noite: #161412;
+  --color-cinza-chumbo: #201C19;
+  --color-cinza-chumbo-border: #322B25;
+  --color-off-white: #FAF6F0;
+  --color-champanhe-rose: #E2BA8B;
+  --color-rosa-allure: #D89556;
+  --bg-main: #161412;
+  --bg-card: #201C19;
+  --bg-subtle: #1B1815;
+  --border-main: #322B25;
+  --text-main: #FAF6F0;
+  --text-muted: #B8ACA0;
+  --accent-main: #E2BA8B;
+  --cta-main: #D89556;
+}
+
+[data-theme="rouge"] {
+  --color-preto-noite: #120A0C;
+  --color-cinza-chumbo: #1C1013;
+  --color-cinza-chumbo-border: #30171D;
+  --color-off-white: #FFF0F2;
+  --color-champanhe-rose: #E54868;
+  --color-rosa-allure: #C92A47;
+  --bg-main: #120A0C;
+  --bg-card: #1C1013;
+  --bg-subtle: #170D10;
+  --border-main: #30171D;
+  --text-main: #FFF0F2;
+  --text-muted: #BA9CA3;
+  --accent-main: #E54868;
+  --cta-main: #C92A47;
+}
+
 html, body {
+  background-color: var(--bg-main, #121212);
+  color: var(--text-main, #F8F5F2);
   overflow-x: hidden;
   max-width: 100vw;
   width: 100%;
@@ -8,8 +79,27 @@ html, body {
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+/* Scrollbar estilizada Allure */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main, #121212);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-main, #2A2A2A);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-main, #D8A47F);
+}
+

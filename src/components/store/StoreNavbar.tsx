@@ -13,7 +13,10 @@ import {
   Shield,
   Store as StoreIcon,
   ChevronDown,
+  MoreVertical,
+  Palette,
 } from 'lucide-react';
+import { MobileNavDrawer } from './MobileNavDrawer';
 
 interface StoreNavbarProps {
   onOpenAdminLogin: () => void;
@@ -39,27 +42,44 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
     allStores,
     currentStoreId,
     selectStore,
+    palette,
+    setPalette,
   } = useStore();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isStorePickerOpen, setIsStorePickerOpen] = useState(false);
 
+  const isLight = palette === 'light-rose';
+
   return (
-    <header className="sticky top-0 z-40 bg-[#FDFBF9]/95 backdrop-blur-md border-b border-[#F0EAE1]">
-      {/* Top Announcement Bar & Route Tier Indicator */}
-      <div className="bg-[#2D2926] text-[#FDF7F8] text-[11px] font-medium py-1.5 px-4 border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 truncate">
-            <span className="inline-flex items-center gap-1 text-[#F5C7D0] font-semibold">
-              <Sparkles className="w-3 h-3 text-[#F5C7D0]" />
-              Rota Pública do Cliente
-            </span>
-            <span className="hidden md:inline text-white/40">|</span>
-            <span className="hidden md:inline text-white/80 truncate">
-              {config.announcementBar || 'Frete Grátis nas compras acima de R$ 199'}
-            </span>
-          </div>
+    <>
+      <header className={`sticky top-0 z-40 border-b transition-colors duration-200 ${
+        isLight
+          ? 'bg-[#FAF7F5]/95 backdrop-blur-md border-[#E8E1DA] text-[#2D2926]'
+          : 'bg-[#121212]/95 backdrop-blur-md border-[#2A2A2A] text-[#F8F5F2]'
+      }`}>
+        {/* Top Announcement Bar & Route Tier Indicator */}
+        <div className={`text-[11px] font-medium py-1.5 px-4 border-b ${
+          isLight
+            ? 'bg-white text-[#444444] border-[#E8E1DA]'
+            : 'bg-[#1F1F1F] text-[#F8F5F2] border-[#2A2A2A]'
+        }`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 truncate">
+              <span className={`inline-flex items-center gap-1 font-semibold ${
+                isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
+              }`}>
+                <Sparkles className="w-3 h-3" />
+                Allure Intimidades • @allure.intimidades
+              </span>
+              <span className="hidden md:inline text-white/20">|</span>
+              <span className={`hidden md:inline truncate ${
+                isLight ? 'text-[#666666]' : 'text-[#E0E0E0]'
+              }`}>
+                {config.announcementBar || 'Frete Grátis nas compras acima de R$ 199'}
+              </span>
+            </div>
 
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Store Picker */}
@@ -68,15 +88,15 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsStorePickerOpen(!isStorePickerOpen)}
-                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/15 text-white text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-2 py-0.5 rounded bg-[#2A2A2A] hover:bg-[#333333] text-[#F8F5F2] text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer border border-[#3A3A3A]"
                 >
-                  <StoreIcon className="w-3 h-3 text-amber-300" />
-                  <span>Loja: {allStores.find((s) => s.id === currentStoreId)?.name || 'Bella'}</span>
-                  <ChevronDown className="w-2.5 h-2.5" />
+                  <StoreIcon className="w-3 h-3 text-[#D8A47F]" />
+                  <span>Loja: {allStores.find((s) => s.id === currentStoreId)?.name || 'Allure'}</span>
+                  <ChevronDown className="w-2.5 h-2.5 text-[#D8A47F]" />
                 </button>
 
                 {isStorePickerOpen && (
-                  <div className="absolute right-0 mt-1 w-48 bg-[#282523] border border-white/20 rounded-xl shadow-xl z-50 p-1 divide-y divide-white/10 text-xs">
+                  <div className="absolute right-0 mt-1 w-48 bg-[#1F1F1F] border border-[#2A2A2A] rounded-xl shadow-2xl z-50 p-1 divide-y divide-[#2A2A2A] text-xs">
                     {allStores.map((s) => (
                       <button
                         key={s.id}
@@ -87,12 +107,12 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                         }}
                         className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs cursor-pointer ${
                           s.id === currentStoreId
-                            ? 'bg-amber-500/20 text-amber-300 font-bold'
-                            : 'text-[#EDE7DF] hover:bg-white/5'
+                            ? 'bg-[#C75C5C]/20 text-[#D8A47F] font-bold'
+                            : 'text-[#E0E0E0] hover:bg-[#2A2A2A]'
                         }`}
                       >
                         <span>{s.name}</span>
-                        {s.id === currentStoreId && <span className="text-[10px]">✓</span>}
+                        {s.id === currentStoreId && <span className="text-[10px] text-[#D8A47F]">✓</span>}
                       </button>
                     ))}
                   </div>
@@ -110,10 +130,10 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                   onOpenAdminLogin();
                 }
               }}
-              className="text-white/80 hover:text-white hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+              className="text-[#E0E0E0] hover:text-[#D8A47F] hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
               title="Acessar Área do Lojista da Loja Ativa"
             >
-              <StoreIcon className="w-3 h-3 text-[#F5C7D0]" />
+              <StoreIcon className="w-3 h-3 text-[#D8A47F]" />
               <span>Área do Lojista</span>
             </button>
 
@@ -127,10 +147,10 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                   onOpenAdminLogin();
                 }
               }}
-              className="text-amber-300/90 hover:text-amber-200 hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
+              className="text-[#D8A47F] hover:text-[#F8F5F2] hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer"
               title="Acessar Área Master da Plataforma"
             >
-              <Shield className="w-3 h-3 text-amber-400" />
+              <Shield className="w-3 h-3 text-[#D8A47F]" />
               <span className="hidden sm:inline">Super Admin</span>
             </button>
           </div>
@@ -144,7 +164,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 -ml-2 text-[#4A423D] hover:text-[#9B4B5A] sm:hidden cursor-pointer"
+            className="p-2 -ml-2 text-[#E0E0E0] hover:text-[#D8A47F] sm:hidden cursor-pointer"
             aria-label="Abrir menu"
           >
             <Menu className="w-5 h-5" />
@@ -161,19 +181,17 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               }}
               className="text-left cursor-pointer flex items-center gap-2.5 group"
             >
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#9B4B5A] text-white flex items-center justify-center shadow-xs group-hover:bg-[#843A48] transition-colors overflow-hidden border border-[#DDA8B3]">
-                <img
-                  src="/icon.svg"
-                  alt={config.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#1F1F1F] text-[#D8A47F] flex items-center justify-center shadow-md border border-[#D8A47F]/40 group-hover:border-[#D8A47F] transition-all overflow-hidden">
+                <span className="font-['Playfair_Display',serif] font-bold text-base sm:text-lg text-[#D8A47F]">
+                  A
+                </span>
               </div>
               <div>
-                <h1 className="font-['Playfair_Display',serif] text-xl sm:text-2xl font-bold tracking-tight text-[#2D2926] leading-none">
+                <h1 className="font-['Playfair_Display',serif] text-xl sm:text-2xl font-bold tracking-tight text-[#F8F5F2] leading-none">
                   {config.name}
                 </h1>
-                <p className="text-[10px] sm:text-xs text-[#8A7E76] font-medium tracking-widest uppercase mt-0.5">
-                  Lingerie & Moda Íntima
+                <p className="text-[10px] sm:text-xs text-[#D8A47F] font-medium tracking-widest uppercase mt-0.5">
+                  Elegância • Conforto • Autoestima
                 </p>
               </div>
             </button>
@@ -186,15 +204,15 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por conjunto, calcinha, sutiã, cor..."
-                className="w-full bg-[#F5F0EA] border border-[#E8DFD5] rounded-full py-2 pl-10 pr-9 text-xs sm:text-sm text-[#2D2926] placeholder-[#9E948C] focus:outline-none focus:ring-2 focus:ring-[#9B4B5A]/30 focus:border-[#9B4B5A] transition-all"
+                placeholder="Buscar por lingerie, conjunto, cor, tamanho..."
+                className="w-full bg-[#1F1F1F] border border-[#2A2A2A] rounded-full py-2 pl-10 pr-9 text-xs sm:text-sm text-[#F8F5F2] placeholder-[#8A8A8A] focus:outline-none focus:ring-2 focus:ring-[#D8A47F]/30 focus:border-[#D8A47F] transition-all"
               />
-              <Search className="w-4 h-4 text-[#8A7E76] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-[#8A8A8A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7E76] hover:text-[#2D2926] p-1 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A8A] hover:text-[#F8F5F2] p-1 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -208,7 +226,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
             <button
               type="button"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2 text-[#4A423D] hover:text-[#9B4B5A] md:hidden cursor-pointer"
+              className="p-2 text-[#E0E0E0] hover:text-[#D8A47F] md:hidden cursor-pointer"
               aria-label="Buscar produtos"
             >
               <Search className="w-5 h-5" />
@@ -219,19 +237,19 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setAppRoute(isSuperAdminAuthenticated ? 'superadmin' : 'merchant')}
-                className="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[#9B4B5A]/10 text-[#9B4B5A] hover:bg-[#9B4B5A]/20 transition-all flex items-center gap-1.5 cursor-pointer border border-[#9B4B5A]/20"
+                className="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[#1F1F1F] text-[#D8A47F] hover:bg-[#2A2A2A] transition-all flex items-center gap-1.5 cursor-pointer border border-[#D8A47F]/40"
                 title="Acessar Painel Administrativo"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
-                  {isSuperAdminAuthenticated ? 'Super Admin' : 'Painel da Dona'}
+                  {isSuperAdminAuthenticated ? 'Super Admin' : 'Painel Allure'}
                 </span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={onOpenAdminLogin}
-                className="p-2 text-[#7D756D] hover:text-[#9B4B5A] transition-colors rounded-full hover:bg-[#F5F0EA] cursor-pointer"
+                className="p-2 text-[#A0A0A0] hover:text-[#D8A47F] transition-colors rounded-full hover:bg-[#1F1F1F] cursor-pointer"
                 title="Acesso Administrativo (Lojista / Super Admin)"
                 aria-label="Acesso Administrativo"
               >
@@ -239,20 +257,56 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               </button>
             )}
 
-            {/* Shopping Cart Button with Count Badge */}
+            {/* Palette Switcher Button */}
+            <button
+              type="button"
+              onClick={() => {
+                const nextPalette = palette === 'dark-allure' ? 'light-rose' : 'dark-allure';
+                setPalette(nextPalette);
+              }}
+              className={`p-2 rounded-full border transition-all cursor-pointer flex items-center gap-1 text-xs ${
+                isLight
+                  ? 'bg-white text-[#9B4B5A] border-[#E8E1DA] hover:bg-[#F5EFEB]'
+                  : 'bg-[#1F1F1F] text-[#D8A47F] border-[#2A2A2A] hover:bg-[#2A2A2A]'
+              }`}
+              title={isLight ? 'Ativar Allure Dark Mode' : 'Ativar Paleta Rosé Clara Anterior'}
+              aria-label="Alternar Paleta de Cores"
+            >
+              <Palette className="w-4 h-4" />
+              <span className="hidden lg:inline text-[10px] font-bold">
+                {isLight ? 'Paleta Rosé' : 'Allure Dark'}
+              </span>
+            </button>
+
+            {/* Shopping Cart Button with Count Badge in Rosa Allure #C75C5C */}
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-[#9B4B5A] hover:bg-[#843A48] text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-all cursor-pointer active:scale-95"
-              aria-label="Ver Carrinho de Compras"
+              className="relative p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-[#C75C5C] hover:bg-[#B34E4E] text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer active:scale-95"
+              aria-label="Ver Sacola de Compras"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline font-semibold">Sacola</span>
               {cartItemCount > 0 && (
-                <span className="bg-white text-[#9B4B5A] font-bold text-[11px] px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-xs">
+                <span className="bg-[#121212] text-[#F8F5F2] border border-[#D8A47F] font-bold text-[11px] px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-xs">
                   {cartItemCount}
                 </span>
               )}
+            </button>
+
+            {/* Three Dots More Options Menu (Resolve o bug do três pontinho) */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`p-2 rounded-full transition-colors cursor-pointer sm:hidden ${
+                isLight
+                  ? 'text-[#2D2926] hover:bg-white'
+                  : 'text-[#E0E0E0] hover:text-[#D8A47F] hover:bg-[#1F1F1F]'
+              }`}
+              title="Mais opções, categorias e paletas"
+              aria-label="Mais opções"
+            >
+              <MoreVertical className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -265,16 +319,16 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar produtos..."
-                className="w-full bg-[#F5F0EA] border border-[#E8DFD5] rounded-full py-2 pl-10 pr-9 text-xs text-[#2D2926] placeholder-[#9E948C] focus:outline-none focus:ring-2 focus:ring-[#9B4B5A]/30"
+                placeholder="Buscar lingeries, conjuntos, cor..."
+                className="w-full bg-[#1F1F1F] border border-[#2A2A2A] rounded-full py-2 pl-10 pr-9 text-xs text-[#F8F5F2] placeholder-[#8A8A8A] focus:outline-none focus:ring-2 focus:ring-[#D8A47F]/30"
                 autoFocus
               />
-              <Search className="w-4 h-4 text-[#8A7E76] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-[#8A8A8A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7E76] p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A8A] p-1"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -284,14 +338,14 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
         )}
 
         {/* Category Navigation Pills (Horizontal Scroll) */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 border-t border-[#F5F0EA] text-xs font-medium">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 border-t border-[#2A2A2A] text-xs font-medium">
           <button
             type="button"
             onClick={() => setSelectedCategory(null)}
             className={`whitespace-nowrap px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
               selectedCategory === null
-                ? 'bg-[#2D2926] text-white shadow-xs'
-                : 'bg-[#F5F0EA] text-[#59524C] hover:bg-[#EAE4DD] hover:text-[#2D2926]'
+                ? 'bg-[#D8A47F] text-[#121212] font-bold shadow-xs'
+                : 'bg-[#1F1F1F] text-[#E0E0E0] hover:bg-[#2A2A2A] hover:text-[#F8F5F2] border border-[#2A2A2A]'
             }`}
           >
             Todos os Produtos
@@ -307,8 +361,8 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                   onClick={() => setSelectedCategory(isSelected ? null : cat.slug)}
                   className={`whitespace-nowrap px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-[#9B4B5A] text-white shadow-xs'
-                      : 'bg-[#F5F0EA] text-[#59524C] hover:bg-[#EAE4DD] hover:text-[#2D2926]'
+                      ? 'bg-[#C75C5C] text-white font-bold shadow-xs'
+                      : 'bg-[#1F1F1F] text-[#E0E0E0] hover:bg-[#2A2A2A] hover:text-[#F8F5F2] border border-[#2A2A2A]'
                   }`}
                 >
                   <span>{cat.name}</span>
@@ -318,80 +372,14 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs sm:hidden">
-          <div className="absolute inset-y-0 left-0 w-4/5 max-w-xs bg-[#FDFBF9] shadow-xl p-6 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#F0EAE1]">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#9B4B5A] text-white flex items-center justify-center">
-                    <img src="/icon.svg" alt="Logo" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="font-['Playfair_Display',serif] font-bold text-lg text-[#2D2926]">
-                    {config.name}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1 text-[#7D756D] hover:text-[#2D2926]"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+      </header>
 
-              <div className="py-4 space-y-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#8A7E76] px-3 mb-2">
-                  Categorias
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    selectedCategory === null ? 'bg-[#9B4B5A] text-white' : 'text-[#4A423D] hover:bg-[#F5F0EA]'
-                  }`}
-                >
-                  Todos os Produtos
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(cat.slug);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      selectedCategory === cat.slug ? 'bg-[#9B4B5A] text-white' : 'text-[#4A423D] hover:bg-[#F5F0EA]'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#F0EAE1] space-y-3 text-xs text-[#7D756D]">
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-[#9B4B5A]" />
-                <span>{config.phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Instagram className="w-4 h-4 text-[#9B4B5A]" />
-                <span>{config.instagram}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#9B4B5A]" />
-                <span className="truncate">{config.address}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
+      {/* Mobile Nav Drawer (Isolated from header backdrop-blur to eliminate glitches) */}
+      <MobileNavDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        onOpenAdminLogin={onOpenAdminLogin}
+      />
+    </>
   );
 };
