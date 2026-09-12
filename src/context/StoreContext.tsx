@@ -371,7 +371,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Detect incoming order in real-time
         if (!isFirstLoadRef.current && knownOrderIdsRef.current.size > 0) {
           const newOrds = data.filter((o) => !knownOrderIdsRef.current.has(o.id));
-          if (newOrds.length > 0) {
+          if (newOrds.length > 0 && (appRoute === 'merchant' || appRoute === 'superadmin')) {
             const newest = newOrds[0];
             notificationSound.playBookingRingtone();
             notificationSound.showSystemNotification(
@@ -828,6 +828,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Save to Firestore with storeId isolation
     await saveOrderToDb(newOrder, currentStoreId);
 
+    // Salvar ID do pedido no localStorage deste dispositivo para histórico do cliente
+    try {
+      const storageKey = `intimalab_client_orders_${currentStoreId}`;
+      const savedOrders = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      if (!savedOrders.includes(newOrder.id)) {
+        savedOrders.unshift(newOrder.id);
+        localStorage.setItem(storageKey, JSON.stringify(savedOrders));
+      }
+    } catch {
+      // ignore
+    }
+
     // Decrement stock for ordered product variants
     for (const item of cart) {
       const prod = products.find((p) => p.id === item.product.id);
@@ -845,16 +857,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     }
 
-    // Trigger ringtone and notification
-    notificationSound.playBookingRingtone();
-    notificationSound.showSystemNotification(
-      `Novo Pedido Recebido! 🛍️ ${currentStore.name}`,
-      `${newOrder.customerName} fez o pedido #${newOrder.orderNumber} (R$ ${totalAmount.toFixed(2).replace('.', ',')})`,
-      '/icon.svg',
-      { orderId: newOrder.id }
-    );
+    // Trigger ringtone and notification ONLY for merchant or superadmin
+    if (appRoute === 'merchant' || appRoute === 'superadmin') {
+      notificationSound.playBookingRingtone();
+      notificationSound.showSystemNotification(
+        `Novo Pedido Recebido! 🛍️ ${currentStore.name}`,
+        `${newOrder.customerName} fez o pedido #${newOrder.orderNumber} (R$ ${totalAmount.toFixed(2).replace('.', ',')})`,
+        '/icon.svg',
+        { orderId: newOrder.id }
+      );
+      setLastCreatedOrder(newOrder);
+    }
 
-    setLastCreatedOrder(newOrder);
     clearCart();
 
     return newOrder;

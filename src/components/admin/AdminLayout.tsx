@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore, AdminTab } from '../../context/StoreContext';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminOrders } from './AdminOrders';
 import { AdminProducts } from './AdminProducts';
 import { AdminCategories } from './AdminCategories';
 import { AdminSettings } from './AdminSettings';
+import { ShareStoreModal } from './ShareStoreModal';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -14,6 +15,7 @@ import {
   Eye,
   LogOut,
   Sparkles,
+  Share2,
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -27,6 +29,8 @@ export const AdminLayout: React.FC = () => {
     currentStoreId,
     setAppRoute,
   } = useStore();
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const pendingCount = orders.filter((o) => o.status === 'pendente').length;
 
@@ -74,6 +78,17 @@ export const AdminLayout: React.FC = () => {
 
             {/* Top Right Controls */}
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                title="Compartilhar link da loja para as clientes"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Link da Loja</span>
+                <span className="sm:hidden">Compartilhar</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setAppRoute('store')}
@@ -138,6 +153,12 @@ export const AdminLayout: React.FC = () => {
         {adminTab === 'categories' && <AdminCategories />}
         {adminTab === 'settings' && <AdminSettings />}
       </main>
+
+      {/* Share Store Modal */}
+      <ShareStoreModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      />
     </div>
   );
 };

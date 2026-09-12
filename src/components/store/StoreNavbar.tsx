@@ -11,8 +11,10 @@ import {
   Menu,
   MoreVertical,
   Palette,
+  PackageCheck,
 } from 'lucide-react';
 import { MobileNavDrawer } from './MobileNavDrawer';
+import { ClientOrderTrackingModal } from './ClientOrderTrackingModal';
 
 interface StoreNavbarProps {
   onOpenAdminLogin?: () => void;
@@ -40,6 +42,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
   const isLight = palette === 'light-rose';
 
@@ -123,7 +126,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
           </button>
 
           {/* Brand Logo & Name */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={() => {
@@ -131,9 +134,9 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 setSearchQuery('');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="text-left cursor-pointer flex items-center gap-2.5 group"
+              className="text-left cursor-pointer flex items-center gap-2 sm:gap-2.5 group min-w-0"
             >
-              <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-md transition-all overflow-hidden border ${
+              <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shadow-md transition-all overflow-hidden border shrink-0 ${
                 isLight
                   ? 'bg-white border-[#E8E1DA] group-hover:border-[#9B4B5A]'
                   : 'bg-[#1F1F1F] text-[#D8A47F] border-[#D8A47F]/40 group-hover:border-[#D8A47F]'
@@ -145,20 +148,20 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                     className="w-full h-full object-cover rounded-full"
                   />
                 ) : (
-                  <span className={`font-['Playfair_Display',serif] font-bold text-base sm:text-lg ${
+                  <span className={`font-['Playfair_Display',serif] font-bold text-sm sm:text-lg ${
                     isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                   }`}>
                     {config.name ? config.name.charAt(0).toUpperCase() : 'A'}
                   </span>
                 )}
               </div>
-              <div>
-                <h1 className={`font-['Playfair_Display',serif] text-xl sm:text-2xl font-bold tracking-tight leading-none ${
+              <div className="min-w-0">
+                <h1 className={`font-['Playfair_Display',serif] text-base sm:text-2xl font-bold tracking-tight leading-tight truncate ${
                   isLight ? 'text-[#2D2926]' : 'text-[#F8F5F2]'
                 }`}>
                   {config.name}
                 </h1>
-                <p className={`text-[10px] sm:text-xs font-bold tracking-widest uppercase mt-0.5 ${
+                <p className={`text-[9px] sm:text-xs font-bold tracking-widest uppercase mt-0.5 truncate hidden xs:block sm:block ${
                   isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                 }`}>
                   {config.tagline || 'Elegância • Conforto • Autoestima'}
@@ -215,7 +218,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 const nextPalette = palette === 'dark-allure' ? 'light-rose' : 'dark-allure';
                 setPalette(nextPalette);
               }}
-              className={`p-2 rounded-full border transition-all cursor-pointer flex items-center gap-1 text-xs ${
+              className={`p-2 sm:px-2.5 sm:py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${
                 isLight
                   ? 'bg-white text-[#9B4B5A] border-[#E8E1DA] hover:bg-[#F5EFEB]'
                   : 'bg-[#1F1F1F] text-[#D8A47F] border-[#2A2A2A] hover:bg-[#2A2A2A]'
@@ -223,23 +226,39 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               title={isLight ? 'Ativar Allure Dark Mode' : 'Ativar Paleta Rosé Clara'}
               aria-label="Alternar Tema de Cores"
             >
-              <Palette className="w-4 h-4" />
+              <Palette className="w-4 h-4 shrink-0" />
               <span className="hidden lg:inline text-[10px] font-bold">
                 {isLight ? 'Paleta Rosé' : 'Allure Dark'}
               </span>
+            </button>
+
+            {/* Client Order History Button */}
+            <button
+              type="button"
+              onClick={() => setIsTrackingOpen(true)}
+              className={`p-2 sm:px-3 sm:py-2 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 text-xs ${
+                isLight
+                  ? 'bg-white text-[#2D2926] border-[#E8E1DA] hover:border-[#9B4B5A] hover:text-[#9B4B5A]'
+                  : 'bg-[#1F1F1F] text-[#F8F5F2] border-[#2A2A2A] hover:border-[#D8A47F] hover:text-[#D8A47F]'
+              }`}
+              title="Acompanhar meus pedidos e status"
+              aria-label="Meus Pedidos"
+            >
+              <PackageCheck className="w-4 h-4 text-[#C75C5C] shrink-0" />
+              <span className="hidden sm:inline font-semibold">Meus Pedidos</span>
             </button>
 
             {/* Shopping Cart Button with Count Badge in Rosa Allure #C75C5C */}
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 sm:px-4 sm:py-2.5 rounded-full bg-[#C75C5C] hover:bg-[#B34E4E] text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all cursor-pointer active:scale-95"
+              className="relative p-2 sm:px-4 sm:py-2.5 rounded-full bg-[#C75C5C] hover:bg-[#B34E4E] text-white font-medium text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg transition-all cursor-pointer active:scale-95"
               aria-label="Ver Sacola de Compras"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline font-semibold">Sacola</span>
               {cartItemCount > 0 && (
-                <span className="bg-[#121212] text-[#F8F5F2] border border-[#D8A47F] font-bold text-[11px] px-1.5 py-0.2 rounded-full min-w-[18px] text-center shadow-xs">
+                <span className="bg-[#121212] text-[#F8F5F2] border border-[#D8A47F] font-bold text-[10px] sm:text-[11px] px-1 sm:px-1.5 py-0.2 rounded-full min-w-[17px] text-center shadow-xs">
                   {cartItemCount}
                 </span>
               )}
@@ -320,6 +339,21 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                         </div>
                       </button>
                     )}
+
+                    {/* Meus Pedidos no Celular */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        setIsTrackingOpen(true);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
+                      }`}
+                    >
+                      <PackageCheck className="w-4 h-4 text-[#C75C5C]" />
+                      <span>Meus Pedidos & Rastreio</span>
+                    </button>
 
                     {/* Ver Menu Completo / Categorias */}
                     <button
@@ -437,6 +471,13 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         onOpenAdminLogin={onOpenAdminLogin}
+        onOpenOrderTracking={() => setIsTrackingOpen(true)}
+      />
+
+      {/* Client Order Tracking & Status Modal */}
+      <ClientOrderTrackingModal
+        isOpen={isTrackingOpen}
+        onClose={() => setIsTrackingOpen(false)}
       />
     </>
   );

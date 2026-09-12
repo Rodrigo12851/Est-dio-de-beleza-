@@ -82,6 +82,27 @@ O sistema opera com **isolamento estrito de rotas** por parâmetros de URL:
 
 ## 6. Histórico de Alterações Recentes
 
+### [12/09/2026 - v4] - Otimização da Barra Superior no Mobile (Apenas Ícones Compactos)
+- **Barra de Ações no Mobile**:
+  - Removidos os textos explicativos ("Allure Dark / Paleta Rosé", "Meus Pedidos" e "Sacola") na visualização mobile em telas de smartphone.
+  - A barra agora exibe os ícones limpos e compactos (Paleta, Rastreamento/Meus Pedidos e Sacola com badge de quantidade), deixando a área que estava em destaque no desktop totalmente visível e acessível no celular sem cortes ou quebras de linha.
+  - No desktop (`sm:` e `lg:`), os rótulos de texto continuam presentes para maior clareza visual.
+  - Ajustado o espaçamento da marca e logotipo para prevenir que o nome da boutique empurre os botões para fora da viewport em telas estreitas.
+
+### [12/09/2026 - v3] - Link da Loja no Admin, Isolamento de Alertas e Histórico de Pedidos com Rastreamento em Tempo Real
+- **Isolamento de Notificações (`OrderNotificationBanner`)**:
+  - O banner suspenso de novo pedido ("Novo Pedido Recebido! • Ver no Painel") agora só aparece **exclusivamente nas rotas de Lojista (`/?admin=...`) e Super Admin (`/?superadmin=...`)**. A cliente final no catálogo público nunca mais vê alertas ou sons de novos pedidos destinados à área lojística.
+- **Compartilhamento Rápido do Link da Loja no Painel Lojista**:
+  - Criado o componente `ShareStoreModal.tsx` e adicionado o botão de destaque **"Link da Loja / Compartilhar"** na barra superior do painel administrativo.
+  - A lojista pode copiar com um clique o link exato do catálogo (`/?store=sua-loja`) ou tocar em **"Compartilhar Catálogo no WhatsApp"**, que já abre uma mensagem amigável convidando a cliente com o link direto pronto.
+- **Histórico e Rastreamento de Pedidos do Cliente (`ClientOrderTrackingModal`)**:
+  - Criado modal completo e responsivo de acompanhamento de pedidos na visão do cliente, acessível via botão **"Meus Pedidos"** no topo e menu mobile.
+  - O cliente visualiza a linha do tempo com 4 etapas em tempo real: **Enviado** ➔ **Confirmado** (quando a lojista aprova) ➔ **A Caminho / Pronto p/ Retirada** ➔ **Entregue**.
+  - Qualquer alteração de status feita pela lojista em seu painel reflete instantaneamente na tela da cliente.
+  - Os pedidos gerados no aparelho ficam salvos no `localStorage` por loja, e há também busca rápida por número de WhatsApp caso a cliente tenha feito o pedido em outro dispositivo.
+- **Auditoria e Ajustes de Responsividade Mobile**:
+  - Corrigidos elementos que ficavam ocultos em telas de celular: no HeroBanner, a foto da coleção e o card de consultoria do WhatsApp agora possuem proporção otimizada para mobile; a listagem de categorias no rodapé agora é exibida em todas as larguras de tela; o botão de "Meus Pedidos" foi integrado tanto na barra quanto no menu suspenso e gaveta lateral móvel.
+
 ### [12/09/2026 - v2] - Correção Crítica de Isolamento no Link do Lojista
 - **Remoção da aba Super Admin no link do Lojista**: A lojista nunca mais tem acesso visual ou botão para alternar para a chave master do Dono do App.
 - **Remoção do Seletor de Lojas**: Ao acessar `/?admin=nome-da-loja`, a loja já vem pré-fixada e identificada. Não há mais dropdown listando as outras lojas da plataforma, garantindo sigilo comercial total entre lojistas.

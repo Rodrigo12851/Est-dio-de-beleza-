@@ -452,7 +452,7 @@ export const StoreView: React.FC = () => {
               </ul>
             </div>
 
-            <div className="space-y-2 hidden sm:block">
+            <div className="space-y-2">
               <h4
                 className={`text-xs font-bold uppercase tracking-wider ${
                   isLight ? 'text-[#2D2926]' : 'text-[#F8F5F2]'

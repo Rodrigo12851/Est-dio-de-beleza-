@@ -42,13 +42,13 @@ export const HeroBanner: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Image - hidden on small mobile to avoid excessive vertical scrolling */}
-          <div className="hidden md:block md:col-span-5 relative">
-            <div className="relative mx-auto max-w-xs sm:max-w-sm">
-              <div className="aspect-4/5 rounded-2xl overflow-hidden shadow-xl border-2 border-[#2A2A2A]">
+          {/* Right Image - visível com proporção compacta no mobile e destaque no desktop */}
+          <div className="md:col-span-5 relative mt-1 md:mt-0">
+            <div className="relative mx-auto max-w-[220px] sm:max-w-xs md:max-w-sm">
+              <div className="aspect-4/5 sm:aspect-4/5 rounded-2xl overflow-hidden shadow-xl border-2 border-[#2A2A2A]">
                 <img
                   src={config.bannerImage || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1000'}
-                  alt="Coleção Allure Intimidades"
+                  alt={`Coleção ${config.name}`}
                   className="w-full h-full object-cover object-center"
                 />
               </div>
@@ -58,16 +58,16 @@ export const HeroBanner: React.FC = () => {
                 href={`https://wa.me/${(config.whatsapp || config.phone).replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Gostaria de consultoria de tamanhos da boutique.')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="absolute -bottom-2 -left-2 bg-[#1F1F1F]/95 backdrop-blur-md rounded-xl p-2.5 shadow-xl border border-[#2A2A2A] hover:border-[#D8A47F] transition-all max-w-[200px] group cursor-pointer block text-left"
+                className="absolute -bottom-2 -left-2 bg-[#1F1F1F]/95 backdrop-blur-md rounded-xl p-2 sm:p-2.5 shadow-xl border border-[#2A2A2A] hover:border-[#D8A47F] transition-all max-w-[190px] sm:max-w-[200px] group cursor-pointer block text-left"
                 title="Falar no WhatsApp"
               >
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <p className="text-[9px] font-bold text-[#D8A47F] uppercase tracking-wider group-hover:underline">
-                    Atendimento Allure
+                    Atendimento Boutique
                   </p>
                 </div>
-                <p className="text-[11px] font-semibold text-[#F8F5F2] leading-tight flex items-center gap-1">
+                <p className="text-[10px] sm:text-[11px] font-semibold text-[#F8F5F2] leading-tight flex items-center gap-1">
                   <span>Consultoria no WhatsApp</span>
                   <MessageCircle className="w-3 h-3 text-emerald-400 shrink-0 inline" />
                 </p>

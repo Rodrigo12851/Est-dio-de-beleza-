@@ -13,17 +13,20 @@ import {
   Flame,
   Layers,
   ChevronRight,
+  PackageCheck,
 } from 'lucide-react';
 
 interface MobileNavDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenAdminLogin?: () => void;
+  onOpenOrderTracking?: () => void;
 }
 
 export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
   isOpen,
   onClose,
+  onOpenOrderTracking,
 }) => {
   const {
     config,
@@ -235,6 +238,26 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
             >
               Navegação Rápida
             </p>
+
+            {/* Rastreamento de Pedidos da Cliente */}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                if (onOpenOrderTracking) onOpenOrderTracking();
+              }}
+              className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer border ${
+                isLight
+                  ? 'bg-white border-[#E8E1DA] text-[#2D2926] hover:border-[#9B4B5A]'
+                  : 'bg-[#1F1F1F] border-[#2A2A2A] text-[#F8F5F2] hover:border-[#D8A47F]'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <PackageCheck className="w-4 h-4 text-[#C75C5C]" />
+                <span>Meus Pedidos & Status</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+            </button>
 
             <button
               type="button"

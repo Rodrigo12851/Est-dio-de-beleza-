@@ -99,8 +99,10 @@ const MainAppContent: React.FC = () => {
 
   return (
     <>
-      {/* Real-time Order Notification Banner (Owner Alert on Top) */}
-      <OrderNotificationBanner />
+      {/* Real-time Order Notification Banner - Visível APENAS para o Lojista ou Super Admin */}
+      {(appRoute === 'merchant' || appRoute === 'superadmin') && (
+        <OrderNotificationBanner />
+      )}
 
       {/* ROTA 3: SUPER ADMIN PLATAFORMA (Master Governance - 100% Exclusivo) */}
       {appRoute === 'superadmin' && (
