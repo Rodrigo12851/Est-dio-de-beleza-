@@ -3,7 +3,6 @@ import { useStore } from '../../context/StoreContext';
 import { HeroBanner } from './HeroBanner';
 import { ProductCard } from './ProductCard';
 import { ProductDetailModal } from './ProductDetailModal';
-import { AiColorMatchingBar } from './AiColorMatchingBar';
 import { Product } from '../../types';
 import {
   Sparkles,
@@ -47,9 +46,6 @@ export const StoreView: React.FC = () => {
     >
       {/* Hero Banner (Only shown when not actively filtering by search) */}
       {!searchQuery && !selectedCategory && !filterNovidadesOnly && <HeroBanner />}
-
-      {/* Palette Selector Bar (Permite escolher a paleta anterior Rosé/Nude ou Allure Dark) */}
-      {!searchQuery && <AiColorMatchingBar />}
 
       {/* Catálogo de Novidades Showcase (quando houver peças marcadas como novidade) */}
       {!searchQuery && newArrivals.length > 0 && (
@@ -379,13 +375,17 @@ export const StoreView: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold ${
+                  className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold overflow-hidden ${
                     isLight
-                      ? 'bg-[#FAF7F5] text-[#9B4B5A] border-[#E8E1DA]'
+                      ? 'bg-white text-[#9B4B5A] border-[#E8E1DA]'
                       : 'bg-[#1F1F1F] text-[#D8A47F] border-[#D8A47F]/40'
                   }`}
                 >
-                  A
+                  {config.logo ? (
+                    <img src={config.logo} alt={config.name} className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    config.name ? config.name.charAt(0).toUpperCase() : 'A'
+                  )}
                 </div>
                 <span
                   className={`font-['Playfair_Display',serif] font-bold text-base sm:text-lg ${
@@ -408,19 +408,47 @@ export const StoreView: React.FC = () => {
               >
                 Atendimento
               </h4>
-              <ul className="space-y-1 text-xs">
-                <li className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-[#C75C5C]" />
-                  <span>{config.phone}</span>
+              <ul className="space-y-1.5 text-xs">
+                <li>
+                  <a
+                    href={`https://wa.me/${(config.whatsapp || config.phone).replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 transition-colors hover:text-[#C75C5C] hover:underline"
+                    title="Conversar pelo WhatsApp"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-[#C75C5C]" />
+                    <span className="font-semibold">{config.phone || config.whatsapp}</span>
+                  </a>
                 </li>
-                <li className="flex items-center gap-2">
-                  <Instagram className="w-3.5 h-3.5 text-[#C75C5C]" />
-                  <span>{config.instagram}</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-[#C75C5C] shrink-0 mt-0.5" />
-                  <span className="truncate">{config.address}</span>
-                </li>
+                {config.instagram && (
+                  <li>
+                    <a
+                      href={`https://instagram.com/${config.instagram.replace('@', '').trim()}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 transition-colors hover:text-[#C75C5C] hover:underline"
+                      title="Visitar nosso Instagram"
+                    >
+                      <Instagram className="w-3.5 h-3.5 text-[#C75C5C]" />
+                      <span>{config.instagram}</span>
+                    </a>
+                  </li>
+                )}
+                {config.address && (
+                  <li>
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-2 transition-colors hover:text-[#C75C5C] hover:underline"
+                      title="Ver endereço no Google Maps"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-[#C75C5C] shrink-0 mt-0.5" />
+                      <span className="truncate">{config.address}</span>
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
 

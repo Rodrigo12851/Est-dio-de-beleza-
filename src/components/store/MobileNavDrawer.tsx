@@ -115,13 +115,17 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
         >
           <div className="flex items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border shadow-sm ${
+              className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border shadow-sm overflow-hidden ${
                 isLight
-                  ? 'bg-[#FAF7F5] text-[#9B4B5A] border-[#9B4B5A]/40'
+                  ? 'bg-white text-[#9B4B5A] border-[#9B4B5A]/40'
                   : 'bg-[#1F1F1F] text-[#D8A47F] border-[#D8A47F]/40'
               }`}
             >
-              A
+              {config.logo ? (
+                <img src={config.logo} alt={config.name} className="w-full h-full object-cover rounded-full" />
+              ) : (
+                config.name ? config.name.charAt(0).toUpperCase() : 'A'
+              )}
             </div>
             <div>
               <h3 className="font-['Playfair_Display',serif] font-bold text-base leading-tight">
@@ -132,7 +136,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                   isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                 }`}
               >
-                Boutique Íntima
+                {config.tagline || 'Boutique Íntima'}
               </p>
             </div>
           </div>
@@ -358,39 +362,60 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
 
         {/* Drawer Footer with Contacts */}
         <div
-          className={`p-4 border-t space-y-2 text-xs shrink-0 ${
+          className={`p-4 border-t space-y-2.5 text-xs shrink-0 ${
             isLight
-              ? 'border-[#E8E1DA] bg-white text-[#666666]'
+              ? 'border-[#E8E1DA] bg-white text-[#555555]'
               : 'border-[#2A2A2A] bg-[#121212] text-[#A0A0A0]'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <a
+            href={`https://wa.me/${(config.whatsapp || config.phone).replace(/\D/g, '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-2 transition-colors hover:underline ${
+              isLight ? 'hover:text-[#9B4B5A]' : 'hover:text-[#D8A47F]'
+            }`}
+          >
             <Phone
               className={`w-3.5 h-3.5 ${
                 isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
               }`}
             />
-            <span className="font-medium">{config.phone || config.whatsapp}</span>
-          </div>
+            <span className="font-semibold">{config.phone || config.whatsapp}</span>
+          </a>
           {config.instagram && (
-            <div className="flex items-center gap-2">
+            <a
+              href={`https://instagram.com/${config.instagram.replace('@', '').trim()}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 transition-colors hover:underline ${
+                isLight ? 'hover:text-[#9B4B5A]' : 'hover:text-[#D8A47F]'
+              }`}
+            >
               <Instagram
                 className={`w-3.5 h-3.5 ${
                   isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                 }`}
               />
               <span>{config.instagram}</span>
-            </div>
+            </a>
           )}
           {config.address && (
-            <div className="flex items-center gap-2">
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 transition-colors hover:underline ${
+                isLight ? 'hover:text-[#9B4B5A]' : 'hover:text-[#D8A47F]'
+              }`}
+            >
               <MapPin
                 className={`w-3.5 h-3.5 shrink-0 ${
                   isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                 }`}
               />
               <span className="truncate">{config.address}</span>
-            </div>
+            </a>
           )}
         </div>
       </div>

@@ -54,10 +54,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   // Unique colors in this product
   const colorOptions = useMemo(() => {
     if (!product) return [];
-    const map = new Map<string, { color: string; colorHex?: string }>();
+    const map = new Map<string, { color: string; colorHex?: string; colorImage?: string }>();
     product.variants.forEach((v) => {
       if (!map.has(v.color)) {
-        map.set(v.color, { color: v.color, colorHex: v.colorHex });
+        map.set(v.color, { color: v.color, colorHex: v.colorHex, colorImage: v.colorImage });
       }
     });
     return Array.from(map.values());
@@ -82,28 +82,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       (v) => v.color === selectedColor && v.size === selectedSize
     );
   }, [product, selectedColor, selectedSize]);
-
-  // AI color insight text
-  const aiLightInsight = useMemo(() => {
-    if (lightCondition === 'warm') {
-      return `IA Allure Match: Sob luz âmbar noturna (2700K), o tom ${selectedColor || 'selecionado'} ganha reflexos dourados profundos, realçando rendas e momentos especiais.`;
-    }
-    if (lightCondition === 'studio') {
-      return `IA Allure Match: Sob luz de estúdio (4000K), o acabamento acetinado do ${selectedColor || 'modelo'} exibe alta nitidez de tramas e máxima sofisticação.`;
-    }
-    return `IA Allure Match: Sob luz natural (5500K), o tom ${selectedColor || 'selecionado'} exibe 100% de fidelidade cromática e harmonia para o dia a dia.`;
-  }, [lightCondition, selectedColor]);
-
-  const lightFilterStyle = useMemo(() => {
-    switch (lightCondition) {
-      case 'warm':
-        return { filter: 'sepia(0.28) saturate(1.25) brightness(0.96) hue-rotate(-8deg)' };
-      case 'studio':
-        return { filter: 'contrast(1.12) brightness(1.05) saturate(1.1)' };
-      default:
-        return { filter: 'brightness(1.02) contrast(1.02) saturate(1.04)' };
-    }
-  }, [lightCondition]);
 
   if (!product) return null;
 
@@ -146,15 +124,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
         {/* Modal Body: Two columns on desktop */}
         <div className="overflow-y-auto grid grid-cols-1 md:grid-cols-12 flex-1">
-          {/* Left Column: Image Gallery & AI Lighting Simulation */}
+          {/* Left Column: Image Gallery */}
           <div className="md:col-span-6 bg-[#121212] flex flex-col p-4 sm:p-6 border-b md:border-b-0 md:border-r border-[#2A2A2A]">
-            {/* Main Stage Image with dynamic filter */}
+            {/* Main Stage Image */}
             <div className="relative aspect-3/4 rounded-2xl overflow-hidden bg-[#181818] shadow-lg border border-[#2A2A2A]">
               <img
                 src={images[activeImageIndex] || images[0]}
                 alt={product.name}
-                style={lightFilterStyle}
-                className="w-full h-full object-cover object-center transition-all duration-500"
+                className="w-full h-full object-cover object-center transition-all duration-300"
               />
 
               {/* Prev / Next Arrows if multiple images */}
@@ -191,58 +168,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               )}
             </div>
 
-            {/* AI Lighting Simulator Bar */}
-            <div className="mt-3 p-3 bg-[#1F1F1F] border border-[#2A2A2A] rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-[#D8A47F] uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#D8A47F]" />
-                  Simulação de Luz IA
-                </span>
-                <span className="text-[10px] text-[#A0A0A0]">Provador Virtual</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setLightCondition('natural')}
-                  className={`py-1.5 px-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    lightCondition === 'natural'
-                      ? 'bg-[#D8A47F] text-[#121212] font-bold shadow-xs'
-                      : 'bg-[#2A2A2A] text-[#E0E0E0] hover:bg-[#333333]'
-                  }`}
-                >
-                  <Sun className="w-3 h-3" />
-                  <span>Dia (5500K)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLightCondition('warm')}
-                  className={`py-1.5 px-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    lightCondition === 'warm'
-                      ? 'bg-[#D8A47F] text-[#121212] font-bold shadow-xs'
-                      : 'bg-[#2A2A2A] text-[#E0E0E0] hover:bg-[#333333]'
-                  }`}
-                >
-                  <Moon className="w-3 h-3" />
-                  <span>Noite (2700K)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLightCondition('studio')}
-                  className={`py-1.5 px-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                    lightCondition === 'studio'
-                      ? 'bg-[#D8A47F] text-[#121212] font-bold shadow-xs'
-                      : 'bg-[#2A2A2A] text-[#E0E0E0] hover:bg-[#333333]'
-                  }`}
-                >
-                  <Camera className="w-3 h-3" />
-                  <span>Estúdio (4000K)</span>
-                </button>
-              </div>
-              <p className="text-[10px] text-[#D8A47F] mt-2 leading-tight">
-                {aiLightInsight}
-              </p>
-            </div>
-
             {/* Gallery Thumbnails */}
             {images.length > 1 && (
               <div className="flex items-center gap-2.5 mt-3 overflow-x-auto pb-1">
@@ -274,11 +199,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <span className="px-2.5 py-0.5 rounded-full bg-[#D8A47F] text-[#121212] text-[10px] font-black flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-[#121212]" />
                       <span>{product.newArrivalBadge || 'Novidade no Estoque'}</span>
-                      {product.newArrivalDays && (
-                        <span className="bg-[#121212]/30 text-[#121212] px-1.5 py-0.2 rounded text-[9px]">
-                          {product.newArrivalDays}d no catálogo
-                        </span>
-                      )}
                     </span>
                   )}
                 </div>
@@ -343,10 +263,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             : 'border-[#2A2A2A] bg-[#1F1F1F] text-[#E0E0E0] hover:border-[#3A3A3A]'
                         }`}
                       >
-                        <span
-                          className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0"
-                          style={{ backgroundColor: opt.colorHex || '#1A1A1A' }}
-                        />
+                        {opt.colorImage ? (
+                          <img
+                            src={opt.colorImage}
+                            alt={opt.color}
+                            className="w-4 h-4 rounded-full object-cover border border-white/30 shrink-0"
+                          />
+                        ) : (
+                          <span
+                            className="w-3.5 h-3.5 rounded-full border border-white/20 shrink-0"
+                            style={{ backgroundColor: opt.colorHex || '#1A1A1A' }}
+                          />
+                        )}
                         <span>{opt.color}</span>
                         {isSelected && <Check className="w-3 h-3 text-[#D8A47F]" />}
                       </button>
@@ -461,12 +389,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </div>
 
               {/* Micro Perks */}
-              <div className="flex items-center justify-between text-[11px] text-[#A0A0A0] pt-1">
-                <span className="flex items-center gap-1">
-                  <Truck className="w-3 h-3 text-[#D8A47F]" /> Envio para todo o Brasil
-                </span>
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-[#D8A47F]" /> Compra 100% Segura
+              <div className="flex items-center justify-end text-[11px] text-[#A0A0A0] pt-1">
+                <span className="flex items-center gap-1 text-emerald-400">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Compra 100% Segura & Atendimento Personalizado
                 </span>
               </div>
             </div>

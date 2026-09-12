@@ -20,7 +20,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
   // Compute unique colors and sizes
   const availableSizes = Array.from(new Set(product.variants.map((v) => v.size)));
   const availableColors = Array.from(
-    new Map(product.variants.map((v) => [v.color, v.colorHex || '#1A1A1A'])).entries()
+    new Map<string, { colorHex: string; colorImage?: string }>(
+      product.variants.map((v) => [v.color, { colorHex: v.colorHex || '#1A1A1A', colorImage: v.colorImage }])
+    ).entries()
   );
 
   const totalStock = product.variants.reduce((acc, v) => acc + v.stockQuantity, 0);
@@ -85,13 +87,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
         <div className="space-y-1">
           {/* Color Dots */}
           <div className="flex items-center gap-1 pb-0.5">
-            {availableColors.slice(0, 4).map(([colorName, colorHex]) => (
-              <span
-                key={colorName}
-                title={colorName}
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-black/20 shrink-0"
-                style={{ backgroundColor: colorHex }}
-              />
+            {availableColors.slice(0, 4).map(([colorName, colorData]) => (
+              colorData.colorImage ? (
+                <img
+                  key={colorName}
+                  src={colorData.colorImage}
+                  alt={colorName}
+                  title={colorName}
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full object-cover border border-black/20 shrink-0"
+                />
+              ) : (
+                <span
+                  key={colorName}
+                  title={colorName}
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-black/20 shrink-0"
+                  style={{ backgroundColor: colorData.colorHex }}
+                />
+              )
             ))}
             {availableColors.length > 4 && (
               <span

@@ -24,6 +24,7 @@ export interface ProductVariant {
   size: string; // P, M, G, GG, 40, 42, 44, 46, Único
   color: string; // Preto Clássico, Branco Noiva, Romance Rose, Vermelho Rubi, etc.
   colorHex?: string; // #000000, #FFFFFF, #E3A857, etc.
+  colorImage?: string; // Foto ou amostra da cor/tecido da galeria
   stockQuantity: number;
   sku?: string;
 }
@@ -74,6 +75,7 @@ export interface OrderItem {
   size: string;
   color: string;
   colorHex?: string;
+  colorImage?: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Product, ProductVariant } from '../../types';
+import { fileToDataUrl, extractAverageColor } from '../../utils/imageUpload';
 import {
   Plus,
   Search,
@@ -13,6 +14,9 @@ import {
   Sparkles,
   Layers,
   Image as ImageIcon,
+  Camera,
+  Upload,
+  Palette,
 } from 'lucide-react';
 
 export const AdminProducts: React.FC = () => {
@@ -23,6 +27,11 @@ export const AdminProducts: React.FC = () => {
   const [onlyNovidades, setOnlyNovidades] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [activeVariantColorUploadIndex, setActiveVariantColorUploadIndex] = useState<number | null>(null);
+
+  const productPhotosInputRef = useRef<HTMLInputElement>(null);
+  const variantColorPhotoInputRef = useRef<HTMLInputElement>(null);
 
   const filteredProducts = products.filter((p) => {
     if (onlyNovidades && !p.isNewArrival) return false;
@@ -138,6 +147,79 @@ export const AdminProducts: React.FC = () => {
       ...editingProduct,
       variants: newVariants,
     });
+  };
+
+  // Upload one or multiple photos directly from mobile/PC gallery for the product
+  const handleProductPhotosUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !editingProduct) return;
+
+    try {
+      setIsUploadingImages(true);
+      const newUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const dataUrl = await fileToDataUrl(file, 1000, 1000, 0.85);
+        newUrls.push(dataUrl);
+      }
+
+      const existingImages = editingProduct.images || [];
+      setEditingProduct({
+        ...editingProduct,
+        images: [...existingImages, ...newUrls],
+      });
+    } catch (err) {
+      alert('Erro ao carregar fotos da galeria. Tente fotos menores.');
+    } finally {
+      setIsUploadingImages(false);
+      if (productPhotosInputRef.current) productPhotosInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveProductImage = (idxToRemove: number) => {
+    if (!editingProduct) return;
+    const current = editingProduct.images || [];
+    setEditingProduct({
+      ...editingProduct,
+      images: current.filter((_, i) => i !== idxToRemove),
+    });
+  };
+
+  // Upload color/fabric swatch photo from gallery for a specific variant
+  const handleVariantColorPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingProduct || activeVariantColorUploadIndex === null) return;
+
+    try {
+      const dataUrl = await fileToDataUrl(file, 300, 300, 0.9);
+      const avgHex = await extractAverageColor(dataUrl);
+
+      const updated = [...(editingProduct.variants || [])];
+      if (updated[activeVariantColorUploadIndex]) {
+        updated[activeVariantColorUploadIndex].colorImage = dataUrl;
+        // Also auto-update hex color from the fabric photo!
+        updated[activeVariantColorUploadIndex].colorHex = avgHex;
+      }
+
+      setEditingProduct({
+        ...editingProduct,
+        variants: updated,
+      });
+    } catch (err) {
+      alert('Não foi possível processar a foto da cor. Tente outra imagem.');
+    } finally {
+      setActiveVariantColorUploadIndex(null);
+      if (variantColorPhotoInputRef.current) variantColorPhotoInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveVariantColorPhoto = (idx: number) => {
+    if (!editingProduct) return;
+    const updated = [...(editingProduct.variants || [])];
+    if (updated[idx]) {
+      updated[idx].colorImage = undefined;
+    }
+    setEditingProduct({ ...editingProduct, variants: updated });
   };
 
   return (
@@ -492,38 +574,130 @@ export const AdminProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* Image URLs */}
-              <div className="space-y-2 bg-white p-4 rounded-2xl border border-[#E8DFD5]">
-                <label className="block font-bold text-[#2D2926]">
-                  URL da Foto Principal (ou fotos separadas por vírgula)
-                </label>
-                <input
-                  type="text"
-                  value={(editingProduct.images || []).join(', ')}
-                  onChange={(e) =>
-                    setEditingProduct({
-                      ...editingProduct,
-                      images: e.target.value.split(',').map((url) => url.trim()).filter(Boolean),
-                    })
-                  }
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full bg-[#FAF8F5] border border-[#E8DFD5] rounded-xl px-3 py-2 text-xs text-[#2D2926]"
-                />
-                <p className="text-[11px] text-[#8A7E76]">
-                  Dica: cole um ou mais links de imagens web para compor a galeria da peça.
-                </p>
+              {/* FOTOS DO PRODUTO (Galeria do Celular / PC + URLs) */}
+              <div className="space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-[#E8DFD5]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <label className="block font-bold text-sm text-[#2D2926] flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-[#9B4B5A]" />
+                      <span>Fotos do Produto (Galeria da Boutique)</span>
+                    </label>
+                    <p className="text-[11px] text-[#7D756D]">
+                      A lojista pode selecionar fotos diretamente da galeria do celular ou do computador
+                    </p>
+                  </div>
+
+                  {/* Hidden file input for product images */}
+                  <input
+                    ref={productPhotosInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleProductPhotosUpload}
+                    className="hidden"
+                  />
+
+                  <button
+                    type="button"
+                    disabled={isUploadingImages}
+                    onClick={() => productPhotosInputRef.current?.click()}
+                    className="px-4 py-2 bg-[#9B4B5A] hover:bg-[#843A48] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer self-start sm:self-auto active:scale-95 disabled:opacity-50"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>{isUploadingImages ? 'Processando Fotos...' : 'Pegar Fotos na Galeria'}</span>
+                  </button>
+                </div>
+
+                {/* Gallery Previews Grid */}
+                {(editingProduct.images || []).length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 pt-2">
+                    {(editingProduct.images || []).map((imgUrl, imgIdx) => (
+                      <div
+                        key={imgIdx}
+                        className="relative aspect-3/4 rounded-xl overflow-hidden border-2 border-[#E8DFD5] bg-[#FAF8F5] group shadow-xs"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Foto ${imgIdx + 1}`}
+                          className="w-full h-full object-cover object-center"
+                        />
+                        {imgIdx === 0 && (
+                          <span className="absolute top-1 left-1 bg-[#9B4B5A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-xs">
+                            Principal
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProductImage(imgIdx)}
+                          className="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md opacity-90 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          title="Remover foto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => productPhotosInputRef.current?.click()}
+                    className="p-6 border-2 border-dashed border-[#E8DFD5] hover:border-[#9B4B5A] rounded-xl text-center bg-[#FAF8F5] cursor-pointer transition-colors"
+                  >
+                    <Camera className="w-8 h-8 text-[#9B4B5A]/50 mx-auto mb-1" />
+                    <p className="text-xs font-bold text-[#4A423D]">
+                      Nenhuma foto adicionada ainda
+                    </p>
+                    <p className="text-[11px] text-[#7D756D]">
+                      Clique aqui para abrir a galeria e escolher as fotos desta peça
+                    </p>
+                  </div>
+                )}
+
+                {/* Secondary / Optional direct URL input */}
+                <div className="pt-2 border-t border-[#F0EAE1]">
+                  <details className="text-[11px] text-[#7D756D] cursor-pointer">
+                    <summary className="font-semibold text-[#9B4B5A] hover:underline">
+                      + Adicionar ou colar links de imagens web (opcional)
+                    </summary>
+                    <div className="mt-2 space-y-1">
+                      <input
+                        type="text"
+                        value={(editingProduct.images || []).join(', ')}
+                        onChange={(e) =>
+                          setEditingProduct({
+                            ...editingProduct,
+                            images: e.target.value.split(',').map((url) => url.trim()).filter(Boolean),
+                          })
+                        }
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full bg-[#FAF8F5] border border-[#E8DFD5] rounded-xl px-3 py-2 text-xs text-[#2D2926]"
+                      />
+                      <p className="text-[10px] text-[#8A7E76]">
+                        Separe múltiplos links por vírgula se preferir colar URLs de fotos.
+                      </p>
+                    </div>
+                  </details>
+                </div>
               </div>
 
-              {/* VARIANT & STOCK MATRIX (Tamanho x Cor x Estoque) */}
+              {/* VARIANT & STOCK MATRIX (Tamanho x Cor x Foto/Hex x Estoque) */}
               <div className="space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-[#E8DFD5]">
+                {/* Hidden input for variant swatch color photos */}
+                <input
+                  ref={variantColorPhotoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleVariantColorPhotoUpload}
+                  className="hidden"
+                />
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h4 className="font-bold text-sm text-[#2D2926] flex items-center gap-1.5">
                       <Layers className="w-4 h-4 text-[#9B4B5A]" />
-                      <span>Grade de Variações & Estoque</span>
+                      <span>Grade de Variações & Cores</span>
                     </h4>
                     <p className="text-[11px] text-[#7D756D]">
-                      Defina a quantidade de cada combinação de tamanho e cor disponível na boutique
+                      A lojista pode definir Tamanho, Nome da Cor e <strong>tirar/escolher foto da cor na galeria</strong>
                     </p>
                   </div>
 
@@ -533,7 +707,7 @@ export const AdminProducts: React.FC = () => {
                       onClick={handleAddStandardGrid}
                       className="px-2.5 py-1 bg-[#FAF3F5] text-[#9B4B5A] border border-[#F0D5DC] rounded-lg text-[11px] font-bold hover:bg-[#9B4B5A] hover:text-white transition-colors cursor-pointer"
                     >
-                      + Gerar Grade Padrão (P, M, G, GG)
+                      + Grade Padrão (P, M, G, GG)
                     </button>
                     <button
                       type="button"
@@ -559,15 +733,15 @@ export const AdminProducts: React.FC = () => {
                 </div>
 
                 {/* Variants List Table */}
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
                   {(editingProduct.variants || []).map((v, idx) => (
                     <div
                       key={v.id || idx}
-                      className="grid grid-cols-12 gap-2 p-2 bg-[#FAF8F5] rounded-xl items-center border border-[#EAE4DD]"
+                      className="p-3 bg-[#FAF8F5] rounded-2xl border border-[#EAE4DD] flex flex-col sm:flex-row sm:items-center gap-2.5"
                     >
                       {/* Size */}
-                      <div className="col-span-3">
-                        <label className="text-[10px] text-[#8A7E76] block">Tamanho</label>
+                      <div className="w-full sm:w-20">
+                        <label className="text-[10px] text-[#8A7E76] font-bold block mb-0.5">Tamanho</label>
                         <input
                           type="text"
                           value={v.size}
@@ -577,13 +751,13 @@ export const AdminProducts: React.FC = () => {
                             setEditingProduct({ ...editingProduct, variants: updated });
                           }}
                           placeholder="P / 42"
-                          className="w-full bg-white border border-[#E8DFD5] rounded-lg px-2 py-1 text-xs font-bold"
+                          className="w-full bg-white border border-[#E8DFD5] rounded-xl px-2.5 py-1.5 text-xs font-bold"
                         />
                       </div>
 
                       {/* Color Name */}
-                      <div className="col-span-4">
-                        <label className="text-[10px] text-[#8A7E76] block">Cor</label>
+                      <div className="flex-1">
+                        <label className="text-[10px] text-[#8A7E76] font-bold block mb-0.5">Nome da Cor</label>
                         <input
                           type="text"
                           value={v.color}
@@ -592,29 +766,73 @@ export const AdminProducts: React.FC = () => {
                             updated[idx].color = e.target.value;
                             setEditingProduct({ ...editingProduct, variants: updated });
                           }}
-                          placeholder="Preto / Rose"
-                          className="w-full bg-white border border-[#E8DFD5] rounded-lg px-2 py-1 text-xs"
+                          placeholder="Ex: Romance Rose, Vinho Bordô"
+                          className="w-full bg-white border border-[#E8DFD5] rounded-xl px-2.5 py-1.5 text-xs"
                         />
                       </div>
 
-                      {/* Color Hex */}
-                      <div className="col-span-2">
-                        <label className="text-[10px] text-[#8A7E76] block">Cor Hex</label>
-                        <input
-                          type="color"
-                          value={v.colorHex || '#1A1A1A'}
-                          onChange={(e) => {
-                            const updated = [...(editingProduct.variants || [])];
-                            updated[idx].colorHex = e.target.value;
-                            setEditingProduct({ ...editingProduct, variants: updated });
-                          }}
-                          className="w-full h-7 bg-white rounded cursor-pointer border border-[#E8DFD5]"
-                        />
+                      {/* Color Swatch / Photo from Gallery (Requested by user) */}
+                      <div className="w-full sm:w-56">
+                        <label className="text-[10px] text-[#8A7E76] font-bold block mb-0.5">
+                          Amostra da Cor (Foto na Galeria ou Cor Hex)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {/* Visual Thumbnail of Swatch */}
+                          {v.colorImage ? (
+                            <div className="relative w-8 h-8 rounded-lg overflow-hidden border-2 border-[#D8A47F] shrink-0 group">
+                              <img
+                                src={v.colorImage}
+                                alt={v.color}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariantColorPhoto(idx)}
+                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                                title="Remover foto da cor"
+                              >
+                                <X className="w-3 h-3 text-red-400" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span
+                              className="w-8 h-8 rounded-lg border border-black/20 shrink-0 shadow-2xs"
+                              style={{ backgroundColor: v.colorHex || '#1A1A1A' }}
+                            />
+                          )}
+
+                          {/* Button to pick color photo from gallery */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveVariantColorUploadIndex(idx);
+                              variantColorPhotoInputRef.current?.click();
+                            }}
+                            className="px-2 py-1.5 bg-white border border-[#E8DFD5] hover:border-[#9B4B5A] text-[#4A423D] rounded-xl text-[11px] font-semibold flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
+                            title="Tirar foto ou pegar foto da cor na galeria"
+                          >
+                            <Camera className="w-3.5 h-3.5 text-[#9B4B5A]" />
+                            <span>{v.colorImage ? 'Trocar Foto' : 'Foto na Galeria'}</span>
+                          </button>
+
+                          {/* Native Hex color input as fallback or fine-tune */}
+                          <input
+                            type="color"
+                            value={v.colorHex || '#1A1A1A'}
+                            onChange={(e) => {
+                              const updated = [...(editingProduct.variants || [])];
+                              updated[idx].colorHex = e.target.value;
+                              setEditingProduct({ ...editingProduct, variants: updated });
+                            }}
+                            title="Ajustar código Hex da cor"
+                            className="w-7 h-7 bg-white rounded-lg cursor-pointer border border-[#E8DFD5] p-0.5 shrink-0"
+                          />
+                        </div>
                       </div>
 
                       {/* Stock Quantity */}
-                      <div className="col-span-2">
-                        <label className="text-[10px] text-[#8A7E76] block">Estoque</label>
+                      <div className="w-full sm:w-24">
+                        <label className="text-[10px] text-[#8A7E76] font-bold block mb-0.5 text-center">Estoque</label>
                         <input
                           type="number"
                           min="0"
@@ -624,22 +842,22 @@ export const AdminProducts: React.FC = () => {
                             updated[idx].stockQuantity = parseInt(e.target.value) || 0;
                             setEditingProduct({ ...editingProduct, variants: updated });
                           }}
-                          className="w-full bg-white border border-[#E8DFD5] rounded-lg px-2 py-1 text-xs font-bold text-center"
+                          className="w-full bg-white border border-[#E8DFD5] rounded-xl px-2 py-1.5 text-xs font-bold text-center"
                         />
                       </div>
 
-                      {/* Remove Button */}
-                      <div className="col-span-1 flex justify-center pt-3">
+                      {/* Remove Variant Button */}
+                      <div className="flex sm:justify-center pt-2 sm:pt-4">
                         <button
                           type="button"
                           onClick={() => {
                             const updated = (editingProduct.variants || []).filter((_, i) => i !== idx);
                             setEditingProduct({ ...editingProduct, variants: updated });
                           }}
-                          className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
-                          title="Remover variação"
+                          className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                          title="Remover esta variação"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

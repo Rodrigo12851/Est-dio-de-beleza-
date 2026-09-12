@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../context/StoreContext';
-import { Sparkles, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { Sparkles, MessageCircle } from 'lucide-react';
+import { openWhatsAppChat } from '../../utils/whatsappOrder';
 
 export const HeroBanner: React.FC = () => {
   const { config, setSelectedCategory } = useStore();
@@ -13,7 +14,7 @@ export const HeroBanner: React.FC = () => {
           <div className="md:col-span-7 space-y-3 sm:space-y-4 text-center md:text-left">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#1F1F1F] text-[#D8A47F] text-[10px] sm:text-xs font-semibold tracking-wide border border-[#D8A47F]/40 shadow-xs">
               <Sparkles className="w-3 h-3 text-[#D8A47F]" />
-              <span>ALLURE INTIMIDADES • LUXO ACESSÍVEL</span>
+              <span>{config.name?.toUpperCase() || 'ALLURE INTIMIDADES'} • LUXO ACESSÍVEL</span>
             </div>
 
             <h2 className="font-['Playfair_Display',serif] text-xl sm:text-3xl lg:text-4xl font-bold text-[#F8F5F2] tracking-tight leading-tight">
@@ -39,22 +40,6 @@ export const HeroBanner: React.FC = () => {
                 Conjuntos em Destaque
               </button>
             </div>
-
-            {/* Value Props - Compact line */}
-            <div className="pt-2 border-t border-[#2A2A2A]/80 flex items-center justify-center md:justify-start gap-3 sm:gap-6 text-[10px] sm:text-xs text-[#C0C0C0]">
-              <div className="flex items-center gap-1.5">
-                <Truck className="w-3.5 h-3.5 text-[#D8A47F] shrink-0" />
-                <span>Entrega Rápida</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#D8A47F] shrink-0" />
-                <span>Embalagem Discreta</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <RefreshCw className="w-3.5 h-3.5 text-[#D8A47F] shrink-0" />
-                <span>1ª Troca Garantida</span>
-              </div>
-            </div>
           </div>
 
           {/* Right Image - hidden on small mobile to avoid excessive vertical scrolling */}
@@ -68,18 +53,25 @@ export const HeroBanner: React.FC = () => {
                 />
               </div>
 
-              {/* Floating Pill Badge */}
-              <div className="absolute -bottom-2 -left-2 bg-[#1F1F1F]/95 backdrop-blur-md rounded-xl p-2.5 shadow-xl border border-[#2A2A2A] max-w-[190px]">
+              {/* Floating Pill Badge with direct WhatsApp redirect */}
+              <a
+                href={`https://wa.me/${(config.whatsapp || config.phone).replace(/\D/g, '')}?text=${encodeURIComponent('Olá! Gostaria de consultoria de tamanhos da boutique.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute -bottom-2 -left-2 bg-[#1F1F1F]/95 backdrop-blur-md rounded-xl p-2.5 shadow-xl border border-[#2A2A2A] hover:border-[#D8A47F] transition-all max-w-[200px] group cursor-pointer block text-left"
+                title="Falar no WhatsApp"
+              >
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="w-2 h-2 rounded-full bg-[#D8A47F] animate-pulse"></span>
-                  <p className="text-[9px] font-bold text-[#D8A47F] uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <p className="text-[9px] font-bold text-[#D8A47F] uppercase tracking-wider group-hover:underline">
                     Atendimento Allure
                   </p>
                 </div>
-                <p className="text-[11px] font-semibold text-[#F8F5F2] leading-tight">
-                  Consultoria de tamanhos no WhatsApp
+                <p className="text-[11px] font-semibold text-[#F8F5F2] leading-tight flex items-center gap-1">
+                  <span>Consultoria no WhatsApp</span>
+                  <MessageCircle className="w-3 h-3 text-emerald-400 shrink-0 inline" />
                 </p>
-              </div>
+              </a>
             </div>
           </div>
         </div>
