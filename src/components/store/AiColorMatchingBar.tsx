@@ -1,124 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Palette, Check, Wand2 } from 'lucide-react';
-
-export type ColorMood = 'noite' | 'rose' | 'champanhe' | 'rouge';
+import React from 'react';
+import { useStore } from '../../context/StoreContext';
+import { StorePalette } from '../../types';
+import { Palette, Check } from 'lucide-react';
 
 interface AiColorMatchingBarProps {
-  activeMood?: ColorMood;
-  onSelectMood?: (mood: ColorMood) => void;
-  detectedAffinityText?: string;
+  activeMood?: string;
+  onSelectMood?: (mood: any) => void;
 }
 
-export const AiColorMatchingBar: React.FC<AiColorMatchingBarProps> = ({
-  activeMood,
-  onSelectMood,
-  detectedAffinityText = 'IA detectou afinidade com tons sofisticados & românticos',
-}) => {
-  const [internalMood, setInternalMood] = useState<ColorMood>(activeMood || 'noite');
+export const AiColorMatchingBar: React.FC<AiColorMatchingBarProps> = () => {
+  const { palette, setPalette } = useStore();
 
-  useEffect(() => {
-    if (activeMood) {
-      setInternalMood(activeMood);
-    }
-  }, [activeMood]);
-
-  const currentMood = activeMood || internalMood;
-
-  const handleSelect = (mood: ColorMood) => {
-    setInternalMood(mood);
-    if (typeof onSelectMood === 'function') {
-      onSelectMood(mood);
-    }
-  };
-
-  const moods: {
-    id: ColorMood;
+  const palettesList: {
+    id: StorePalette;
     name: string;
-    description: string;
     colors: string[];
-    tag: string;
+    isPrevious?: boolean;
   }[] = [
     {
-      id: 'noite',
-      name: 'Preto Noite & Ouro',
-      description: 'Clássico imersivo, elegância pura e rendas profundas',
-      colors: ['#121212', '#2A2A2A', '#D8A47F'],
-      tag: 'Mais Desejado',
+      id: 'dark-allure',
+      name: 'Allure Dark',
+      colors: ['#121212', '#D8A47F', '#C75C5C'],
     },
     {
-      id: 'rose',
-      name: 'Romance Rosê Allure',
-      description: 'Acentos rosados, feminilidade e acolhimento sutil',
-      colors: ['#C75C5C', '#D8A47F', '#F8F5F2'],
-      tag: 'Recomendação IA',
+      id: 'light-rose',
+      name: 'Rosé & Nude (Paleta Anterior)',
+      colors: ['#FAF7F5', '#9B4B5A', '#E8E1DA'],
+      isPrevious: true,
     },
     {
-      id: 'champanhe',
-      name: 'Champanhe & Off-White',
-      description: 'Luminosidade suave, tons acetinados e seda noiva',
-      colors: ['#D8A47F', '#F8F5F2', '#2A2A2A'],
-      tag: 'Alta Costura',
+      id: 'champagne',
+      name: 'Champanhe Seda',
+      colors: ['#161412', '#E2BA8B', '#FAF6F0'],
     },
     {
       id: 'rouge',
-      name: 'Sensual Rouge & Noite',
-      description: 'Intensidade magnética, rubi e tule com transparência',
-      colors: ['#8B1E2F', '#C75C5C', '#121212'],
-      tag: 'Intimista',
+      name: 'Sensual Rouge',
+      colors: ['#120A0C', '#E54868', '#FFF0F2'],
     },
   ];
 
+  const isLight = palette === 'light-rose';
+
   return (
-    <div className="bg-[#1A1A1A] border-y border-[#2A2A2A] py-3.5 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* IA Badge & Explanation */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#C75C5C]/20 border border-[#C75C5C]/40 flex items-center justify-center text-[#D8A47F] shrink-0">
-            <Wand2 className="w-4 h-4 text-[#D8A47F]" />
+    <div
+      className={`border-y py-2.5 px-4 sm:px-6 lg:px-8 transition-colors duration-200 ${
+        isLight
+          ? 'bg-[#F5EFEB] border-[#E8E1DA] text-[#2D2926]'
+          : 'bg-[#181818] border-[#2A2A2A] text-[#F8F5F2]'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        {/* Simple & Clean Theme Label without AI slop text */}
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+              isLight
+                ? 'bg-white text-[#9B4B5A] border-[#E8E1DA]'
+                : 'bg-[#1F1F1F] text-[#D8A47F] border-[#2A2A2A]'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#D8A47F] flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#D8A47F]" />
-                Allure IA • Color Matching
-              </span>
-              <span className="hidden sm:inline-block px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#C75C5C]/20 text-[#F8F5F2] border border-[#C75C5C]/30">
-                Ajuste Dinâmico
-              </span>
-            </div>
-            <p className="text-xs text-[#E0E0E0]">
-              {detectedAffinityText}
-            </p>
+            <span
+              className={`text-[11px] font-bold uppercase tracking-wider ${
+                isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
+              }`}
+            >
+              Paleta da Loja:
+            </span>
+            <span
+              className={`text-xs ml-1.5 font-medium ${
+                isLight ? 'text-[#666666]' : 'text-[#B0B0B0]'
+              }`}
+            >
+              Escolha a que mais agrada você
+            </span>
           </div>
         </div>
 
-        {/* Mood Selector Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          {moods.map((m) => {
-            const isSelected = currentMood === m.id;
+        {/* Palettes Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {palettesList.map((p) => {
+            const isSelected = palette === p.id;
             return (
               <button
-                key={m.id}
+                key={p.id}
                 type="button"
-                onClick={() => handleSelect(m.id)}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all shrink-0 cursor-pointer ${
+                onClick={() => setPalette(p.id)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#2A2A2A] border-[#D8A47F] text-[#F8F5F2] shadow-sm ring-1 ring-[#D8A47F]/40'
+                    ? isLight
+                      ? 'bg-white border-[#9B4B5A] text-[#2D2926] font-bold shadow-xs ring-1 ring-[#9B4B5A]/30'
+                      : 'bg-[#2A2A2A] border-[#D8A47F] text-[#F8F5F2] font-bold shadow-xs ring-1 ring-[#D8A47F]/40'
+                    : isLight
+                    ? 'bg-[#FAF7F5] border-[#E8E1DA] text-[#666666] hover:bg-white'
                     : 'bg-[#141414] border-[#2A2A2A] text-[#A89F91] hover:text-[#F8F5F2] hover:border-[#3A3A3A]'
                 }`}
-                title={m.description}
               >
                 <div className="flex items-center -space-x-1">
-                  {m.colors.map((c, i) => (
+                  {p.colors.map((c, i) => (
                     <span
                       key={i}
-                      className="w-2.5 h-2.5 rounded-full border border-black/50 shrink-0"
+                      className="w-2.5 h-2.5 rounded-full border border-black/40 shrink-0"
                       style={{ backgroundColor: c }}
                     />
                   ))}
                 </div>
-                <span className="whitespace-nowrap">{m.name}</span>
-                {isSelected && <Check className="w-3 h-3 text-[#D8A47F]" />}
+                <span className="whitespace-nowrap">{p.name}</span>
+                {isSelected && (
+                  <Check
+                    className={`w-3 h-3 ${
+                      isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
+                    }`}
+                  />
+                )}
               </button>
             );
           })}

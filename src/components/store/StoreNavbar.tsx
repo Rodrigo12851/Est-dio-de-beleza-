@@ -44,11 +44,14 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
     selectStore,
     palette,
     setPalette,
+    newArrivals,
+    setFilterNovidadesOnly,
   } = useStore();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isStorePickerOpen, setIsStorePickerOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   const isLight = palette === 'light-rose';
 
@@ -294,20 +297,136 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               )}
             </button>
 
-            {/* Three Dots More Options Menu (Resolve o bug do três pontinho) */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className={`p-2 rounded-full transition-colors cursor-pointer sm:hidden ${
-                isLight
-                  ? 'text-[#2D2926] hover:bg-white'
-                  : 'text-[#E0E0E0] hover:text-[#D8A47F] hover:bg-[#1F1F1F]'
-              }`}
-              title="Mais opções, categorias e paletas"
-              aria-label="Mais opções"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+            {/* Three Dots More Options Menu - Popover Direto sem Bug */}
+            <div className="relative sm:hidden">
+              <button
+                type="button"
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className={`p-2 rounded-full transition-colors cursor-pointer ${
+                  isLight
+                    ? 'text-[#2D2926] hover:bg-[#F0EBE6]'
+                    : 'text-[#E0E0E0] hover:text-[#D8A47F] hover:bg-[#1F1F1F]'
+                }`}
+                title="Mais opções e configurações"
+                aria-label="Mais opções"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+
+              {/* Dropdown Menu Flutuante */}
+              {isMoreMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-50 bg-black/40"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className={`absolute right-0 top-full mt-2 w-56 rounded-2xl shadow-2xl border p-2 z-50 transition-all ${
+                      isLight
+                        ? 'bg-white border-[#E8E1DA] text-[#2D2926]'
+                        : 'bg-[#1C1C1C] border-[#2A2A2A] text-[#F8F5F2]'
+                    }`}
+                  >
+                    <div className="px-3 py-2 border-b border-inherit mb-1">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-[#9B4B5A]">
+                        Configurações Rápidas
+                      </p>
+                    </div>
+
+                    {/* Alternar Paleta de Cores (Paleta de antes vs Dark) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPalette(palette === 'dark-allure' ? 'light-rose' : 'dark-allure');
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Palette className="w-4 h-4 text-[#C75C5C]" />
+                        <span>{isLight ? 'Mudar p/ Allure Dark' : 'Voltar p/ Paleta Rosé'}</span>
+                      </div>
+                    </button>
+
+                    {/* Ver Novidades */}
+                    {newArrivals.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterNovidadesOnly(true);
+                          setSelectedCategory(null);
+                          setIsMoreMenuOpen(false);
+                          const el = document.getElementById('catalog-section');
+                          if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                          isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-[#D8A47F]" />
+                          <span>Ver Novidades ({newArrivals.length})</span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Ver Menu Completo / Categorias */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        setIsMobileMenuOpen(true);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
+                      }`}
+                    >
+                      <Menu className="w-4 h-4 text-[#A0A0A0]" />
+                      <span>Todas as Categorias</span>
+                    </button>
+
+                    {/* WhatsApp */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        window.open(`https://wa.me/${config.whatsapp || '5500000000000'}`, '_blank');
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
+                      }`}
+                    >
+                      <Phone className="w-4 h-4 text-emerald-500" />
+                      <span>Falar no WhatsApp</span>
+                    </button>
+
+                    <div className="my-1 border-t border-inherit" />
+
+                    {/* Admin */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        if (isMerchantAuthenticated || isSuperAdminAuthenticated) {
+                          setAppRoute(isSuperAdminAuthenticated ? 'superadmin' : 'merchant');
+                        } else {
+                          onOpenAdminLogin();
+                        }
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+                        isLight ? 'hover:bg-[#FAF7F5] text-[#9B4B5A]' : 'hover:bg-[#252525] text-[#D8A47F]'
+                      }`}
+                    >
+                      <Lock className="w-4 h-4" />
+                      <span>Área do Lojista</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
