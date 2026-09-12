@@ -3,23 +3,19 @@ import { useStore } from '../../context/StoreContext';
 import {
   ShoppingBag,
   Search,
-  Lock,
   X,
   Sparkles,
   Phone,
   Instagram,
   MapPin,
   Menu,
-  Shield,
-  Store as StoreIcon,
-  ChevronDown,
   MoreVertical,
   Palette,
 } from 'lucide-react';
 import { MobileNavDrawer } from './MobileNavDrawer';
 
 interface StoreNavbarProps {
-  onOpenAdminLogin: () => void;
+  onOpenAdminLogin?: () => void;
   onOpenPwaPrompt?: () => void;
 }
 
@@ -35,13 +31,6 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
     setSearchQuery,
     cartItemCount,
     setIsCartOpen,
-    isMerchantAuthenticated,
-    isSuperAdminAuthenticated,
-    appRoute,
-    setAppRoute,
-    allStores,
-    currentStoreId,
-    selectStore,
     palette,
     setPalette,
     newArrivals,
@@ -50,7 +39,6 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isStorePickerOpen, setIsStorePickerOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   const isLight = palette === 'light-rose';
@@ -62,7 +50,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
           ? 'bg-[#FAF7F5]/95 backdrop-blur-md border-[#E8E1DA] text-[#2D2926]'
           : 'bg-[#121212]/95 backdrop-blur-md border-[#2A2A2A] text-[#F8F5F2]'
       }`}>
-        {/* Top Announcement Bar & Route Tier Indicator */}
+        {/* Top Announcement Bar (100% voltado para a cliente da loja) */}
         <div className={`text-[11px] font-medium py-1.5 px-4 border-b ${
           isLight
             ? 'bg-[#F7F2ED] text-[#444444] border-[#E8E1DA]'
@@ -88,93 +76,36 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               )}
             </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Store Picker */}
-            {allStores.length > 1 && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsStorePickerOpen(!isStorePickerOpen)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer border ${
-                    isLight
-                      ? 'bg-white hover:bg-zinc-50 text-[#2D2926] border-[#E8E1DA]'
-                      : 'bg-[#2A2A2A] hover:bg-[#333333] text-[#F8F5F2] border-[#3A3A3A]'
+            {/* Atendimento Direto da Loja para a Cliente */}
+            <div className="flex items-center gap-3 shrink-0">
+              <a
+                href={`https://wa.me/${(config.whatsapp || config.phone || '').replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center gap-1.5 text-[11px] font-semibold hover:underline cursor-pointer ${
+                  isLight ? 'text-[#9B4B5A] hover:text-[#843A48]' : 'text-[#D8A47F] hover:text-[#FAF8F5]'
+                }`}
+              >
+                <Phone className="w-3 h-3 text-emerald-500" />
+                <span>Atendimento WhatsApp</span>
+              </a>
+
+              {config.instagram && (
+                <a
+                  href={`https://instagram.com/${config.instagram.replace('@', '').trim()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`hidden sm:flex items-center gap-1 text-[11px] hover:underline cursor-pointer ${
+                    isLight ? 'text-[#555555]' : 'text-[#A0A0A0]'
                   }`}
                 >
-                  <StoreIcon className={`w-3 h-3 ${isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'}`} />
-                  <span>Loja: {allStores.find((s) => s.id === currentStoreId)?.name || 'Allure'}</span>
-                  <ChevronDown className={`w-2.5 h-2.5 ${isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'}`} />
-                </button>
-
-                {isStorePickerOpen && (
-                  <div className={`absolute right-0 mt-1 w-48 rounded-xl shadow-2xl z-50 p-1 divide-y text-xs border ${
-                    isLight
-                      ? 'bg-white border-[#E8E1DA] divide-[#F0EBE6]'
-                      : 'bg-[#1F1F1F] border-[#2A2A2A] divide-[#2A2A2A]'
-                  }`}>
-                    {allStores.map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          selectStore(s.id);
-                          setIsStorePickerOpen(false);
-                        }}
-                        className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between text-xs cursor-pointer ${
-                          s.id === currentStoreId
-                            ? isLight ? 'bg-[#FAF2F4] text-[#9B4B5A] font-bold' : 'bg-[#C75C5C]/20 text-[#D8A47F] font-bold'
-                            : isLight ? 'text-[#444444] hover:bg-[#FAF7F5]' : 'text-[#E0E0E0] hover:bg-[#2A2A2A]'
-                        }`}
-                      >
-                        <span>{s.name}</span>
-                        {s.id === currentStoreId && <span className="text-[10px]">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Merchant Route Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isMerchantAuthenticated) {
-                  setAppRoute('merchant');
-                } else {
-                  onOpenAdminLogin();
-                }
-              }}
-              className={`hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer ${
-                isLight ? 'text-[#555555] hover:text-[#9B4B5A]' : 'text-[#E0E0E0] hover:text-[#D8A47F]'
-              }`}
-              title="Acessar Área do Lojista da Loja Ativa"
-            >
-              <StoreIcon className={`w-3 h-3 ${isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'}`} />
-              <span>Área do Lojista</span>
-            </button>
-
-            {/* Super Admin Route Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isSuperAdminAuthenticated) {
-                  setAppRoute('superadmin');
-                } else {
-                  onOpenAdminLogin();
-                }
-              }}
-              className={`hover:underline flex items-center gap-1 text-[11px] font-semibold cursor-pointer ${
-                isLight ? 'text-[#9B4B5A] hover:text-[#7A3644]' : 'text-[#D8A47F] hover:text-[#F8F5F2]'
-              }`}
-              title="Acessar Área Master da Plataforma"
-            >
-              <Shield className={`w-3 h-3 ${isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'}`} />
-              <span className="hidden sm:inline">Super Admin</span>
-            </button>
+                  <Instagram className="w-3 h-3" />
+                  <span>{config.instagram}</span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Main Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -277,31 +208,6 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Admin Switcher or Login Lock */}
-            {isMerchantAuthenticated || isSuperAdminAuthenticated ? (
-              <button
-                type="button"
-                onClick={() => setAppRoute(isSuperAdminAuthenticated ? 'superadmin' : 'merchant')}
-                className="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[#1F1F1F] text-[#D8A47F] hover:bg-[#2A2A2A] transition-all flex items-center gap-1.5 cursor-pointer border border-[#D8A47F]/40"
-                title="Acessar Painel Administrativo"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">
-                  {isSuperAdminAuthenticated ? 'Super Admin' : 'Painel Allure'}
-                </span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onOpenAdminLogin}
-                className="p-2 text-[#A0A0A0] hover:text-[#D8A47F] transition-colors rounded-full hover:bg-[#1F1F1F] cursor-pointer"
-                title="Acesso Administrativo (Lojista / Super Admin)"
-                aria-label="Acesso Administrativo"
-              >
-                <Lock className="w-4 h-4" />
-              </button>
-            )}
-
             {/* Palette Switcher Button */}
             <button
               type="button"
@@ -314,8 +220,8 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                   ? 'bg-white text-[#9B4B5A] border-[#E8E1DA] hover:bg-[#F5EFEB]'
                   : 'bg-[#1F1F1F] text-[#D8A47F] border-[#2A2A2A] hover:bg-[#2A2A2A]'
               }`}
-              title={isLight ? 'Ativar Allure Dark Mode' : 'Ativar Paleta Rosé Clara Anterior'}
-              aria-label="Alternar Paleta de Cores"
+              title={isLight ? 'Ativar Allure Dark Mode' : 'Ativar Paleta Rosé Clara'}
+              aria-label="Alternar Tema de Cores"
             >
               <Palette className="w-4 h-4" />
               <span className="hidden lg:inline text-[10px] font-bold">
@@ -435,7 +341,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                       type="button"
                       onClick={() => {
                         setIsMoreMenuOpen(false);
-                        window.open(`https://wa.me/${config.whatsapp || '5500000000000'}`, '_blank');
+                        window.open(`https://wa.me/${(config.whatsapp || config.phone || '').replace(/\D/g, '')}`, '_blank');
                       }}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
                         isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
@@ -443,27 +349,6 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                     >
                       <Phone className="w-4 h-4 text-emerald-500" />
                       <span>Falar no WhatsApp</span>
-                    </button>
-
-                    <div className="my-1 border-t border-inherit" />
-
-                    {/* Admin */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMoreMenuOpen(false);
-                        if (isMerchantAuthenticated || isSuperAdminAuthenticated) {
-                          setAppRoute(isSuperAdminAuthenticated ? 'superadmin' : 'merchant');
-                        } else {
-                          onOpenAdminLogin();
-                        }
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
-                        isLight ? 'hover:bg-[#FAF7F5] text-[#9B4B5A]' : 'hover:bg-[#252525] text-[#D8A47F]'
-                      }`}
-                    >
-                      <Lock className="w-4 h-4" />
-                      <span>Área do Lojista</span>
                     </button>
                   </div>
                 </>

@@ -18,13 +18,12 @@ import {
 interface MobileNavDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenAdminLogin: () => void;
+  onOpenAdminLogin?: () => void;
 }
 
 export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
   isOpen,
   onClose,
-  onOpenAdminLogin,
 }) => {
   const {
     config,
@@ -36,9 +35,6 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
     setFilterNovidadesOnly,
     palette,
     setPalette,
-    isMerchantAuthenticated,
-    isSuperAdminAuthenticated,
-    setAppRoute,
   } = useStore();
 
   // Lock body scroll when mobile drawer is open
@@ -324,39 +320,6 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                   </button>
                 );
               })}
-          </div>
-
-          {/* Admin Switcher / Access */}
-          <div
-            className={`pt-3 border-t ${
-              isLight ? 'border-[#E8E1DA]' : 'border-[#2A2A2A]'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                if (isMerchantAuthenticated || isSuperAdminAuthenticated) {
-                  setAppRoute(isSuperAdminAuthenticated ? 'superadmin' : 'merchant');
-                } else {
-                  onOpenAdminLogin();
-                }
-              }}
-              className={`w-full p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
-                isLight
-                  ? 'bg-white border-[#E8E1DA] text-[#9B4B5A] hover:bg-[#FAF7F5]'
-                  : 'bg-[#1F1F1F] border-[#2A2A2A] text-[#D8A47F] hover:bg-[#2A2A2A]'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>
-                {isSuperAdminAuthenticated
-                  ? 'Painel Super Admin'
-                  : isMerchantAuthenticated
-                  ? 'Painel do Lojista'
-                  : 'Acesso Administrativo (Lojista / Master)'}
-              </span>
-            </button>
           </div>
         </div>
 
