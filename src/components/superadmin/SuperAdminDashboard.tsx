@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useStore } from '../../context/StoreContext';
+import { useStore, SUPER_ADMIN_PIN } from '../../context/StoreContext';
 import { Store } from '../../types';
 import {
   Shield,
@@ -16,11 +16,23 @@ import {
   AlertTriangle,
   XCircle,
   Eye,
+  EyeOff,
   Settings,
   CreditCard,
   ShieldCheck,
   Search,
+  Link as LinkIcon,
+  Copy,
+  Check,
+  MessageCircle,
+  KeyRound,
+  Unlock,
 } from 'lucide-react';
+import {
+  getSuperAdminUrl,
+  getStoreCustomerUrl,
+  getStoreAdminUrl,
+} from '../../utils/storeRouting';
 
 export const SuperAdminDashboard: React.FC = () => {
   const {
@@ -34,10 +46,31 @@ export const SuperAdminDashboard: React.FC = () => {
     setSuperAdminTab,
     products,
     orders,
+    adminResetStorePassword,
+    unblockStore,
+    isStoreBlocked,
+    supportWhatsapp,
+    setSupportWhatsapp,
   } = useStore();
 
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState('');
+  const [copiedMasterLink, setCopiedMasterLink] = useState(false);
+  const [copiedStoreLinkId, setCopiedStoreLinkId] = useState<string | null>(null);
+  const [copiedAdminLinkId, setCopiedAdminLinkId] = useState<string | null>(null);
+
+  // Password visibility map
+  const [visiblePasswords, setVisiblePasswords] = useState<{ [storeId: string]: boolean }>({});
+
+  // Reset password modal state
+  const [resettingStore, setResettingStore] = useState<Store | null>(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
+
+  // Support WhatsApp input state
+  const [whatsappInput, setWhatsappInput] = useState(supportWhatsapp);
+  const [whatsappSavedSuccess, setWhatsappSavedSuccess] = useState(false);
+
   const [newStoreData, setNewStoreData] = useState({
     name: '',
     ownerName: '',
@@ -47,10 +80,57 @@ export const SuperAdminDashboard: React.FC = () => {
     plan: 'pro' as 'standard' | 'pro' | 'enterprise',
   });
 
+  const superAdminUrl = getSuperAdminUrl();
+
+  const copyToClipboard = async (text: string, type: 'master' | 'store' | 'admin', id?: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'master') {
+        setCopiedMasterLink(true);
+        setTimeout(() => setCopiedMasterLink(false), 2500);
+      } else if (type === 'store' && id) {
+        setCopiedStoreLinkId(id);
+        setTimeout(() => setCopiedStoreLinkId(null), 2500);
+      } else if (type === 'admin' && id) {
+        setCopiedAdminLinkId(id);
+        setTimeout(() => setCopiedAdminLinkId(null), 2500);
+      }
+    } catch {
+      alert(`Link copiado: ${text}`);
+    }
+  };
+
+  const togglePasswordVisibility = (storeId: string) => {
+    setVisiblePasswords((prev) => ({
+      ...prev,
+      [storeId]: !prev[storeId],
+    }));
+  };
+
+  const handleSaveSupportWhatsapp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSupportWhatsapp(whatsappInput);
+    setWhatsappSavedSuccess(true);
+    setTimeout(() => setWhatsappSavedSuccess(false), 2500);
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingStore || !newResetPassword.trim()) return;
+
+    await adminResetStorePassword(resettingStore.id, newResetPassword.trim());
+    setResetSuccessMessage(`Senha da loja "${resettingStore.name}" redefinida com sucesso!`);
+    setTimeout(() => {
+      setResetSuccessMessage(null);
+      setResettingStore(null);
+      setNewResetPassword('');
+    }, 1800);
+  };
+
   // Calculate platform totals
   const totalStores = allStores.length;
   const activeStores = allStores.filter((s) => s.status === 'active').length;
-  const suspendedStores = allStores.filter((s) => s.status === 'suspended').length;
+  const blockedStores = allStores.filter((s) => isStoreBlocked(s.id)).length;
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
 
@@ -199,6 +279,90 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Painel do Dono do Aplicativo: Link Mestre & Suporte WhatsApp */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Card 1: Link Exclusivo do Dono do App */}
+          <div className="bg-[#282523] border border-amber-500/30 rounded-2xl p-5 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <span>Meu Link Exclusivo (Dono do Aplicativo)</span>
+                    <span className="text-[10px] bg-amber-400/20 text-amber-300 font-mono font-bold px-2 py-0.5 rounded-full border border-amber-400/30">
+                      MASTER ROOT
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-[#A69C94]">
+                    Link direto para o seu painel central de controle sem passar pela vitrine
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={superAdminUrl}
+                className="flex-1 bg-[#1F1D1B] border border-white/15 rounded-xl px-3 py-2 text-[11px] text-amber-200 font-mono select-all focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => copyToClipboard(superAdminUrl, 'master')}
+                className="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+              >
+                {copiedMasterLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedMasterLink ? 'Copiado!' : 'Copiar Meu Link'}</span>
+              </button>
+            </div>
+
+            <p className="text-[10px] text-[#A69C94]">
+              💡 Salve este link nos seus favoritos do navegador. Sua chave master é protegida e exclusiva.
+            </p>
+          </div>
+
+          {/* Card 2: WhatsApp de Suporte Oficial (Para Lojistas Bloqueadas) */}
+          <div className="bg-[#282523] border border-white/10 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">
+                  WhatsApp de Suporte do Dono
+                </h3>
+                <p className="text-[11px] text-[#A69C94]">
+                  Lojistas que bloquearem a senha por 4 tentativas entrarão em contato neste número
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveSupportWhatsapp} className="flex items-center gap-2">
+              <input
+                type="tel"
+                value={whatsappInput}
+                onChange={(e) => setWhatsappInput(e.target.value)}
+                placeholder="Ex: 5511999999999"
+                className="flex-1 bg-[#1F1D1B] border border-white/15 rounded-xl px-3 py-2 text-xs text-white placeholder-[#7D756D] font-mono focus:outline-none focus:border-amber-400"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+              >
+                {whatsappSavedSuccess ? <Check className="w-3.5 h-3.5" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                <span>{whatsappSavedSuccess ? 'Salvo!' : 'Salvar WhatsApp'}</span>
+              </button>
+            </form>
+
+            <p className="text-[10px] text-[#A69C94]">
+              Número ativo atual: <strong className="text-emerald-400 font-mono">{supportWhatsapp}</strong>
+            </p>
+          </div>
+        </div>
+
         {/* Security & Multi-tenant Notice Card */}
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-start sm:items-center gap-3">
@@ -206,7 +370,7 @@ export const SuperAdminDashboard: React.FC = () => {
             <div>
               <span className="font-bold text-amber-300 mr-2">Segurança Multi-Tenancy Conforme Solicitado:</span>
               <span className="text-[#D9D0C5]">
-                O banco de dados Firestore está configurado com regras rígidas de isolamento. Cada lojista só tem permissão de leitura/escrita vinculada ao seu respectivo <code className="bg-black/40 px-1 py-0.5 rounded text-amber-200">storeId</code>. Processamento de cartão mantido em modo inativo sem cobranças indevidas.
+                O banco de dados Firestore está configurado com isolamento rígido. As senhas alteradas pelas lojistas sincronizam em tempo real com a central do Dono do App.
               </span>
             </div>
           </div>
@@ -252,120 +416,261 @@ export const SuperAdminDashboard: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-[#1F1D1B] text-[#A69C94] uppercase tracking-wider font-semibold border-b border-white/10">
                 <tr>
-                  <th className="py-3.5 px-4">Loja & Identificador</th>
+                  <th className="py-3.5 px-4">Loja & Links Próprios</th>
                   <th className="py-3.5 px-4">Lojista Responsável</th>
-                  <th className="py-3.5 px-4">WhatsApp & PIN</th>
-                  <th className="py-3.5 px-4">Plano</th>
-                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Senha / PIN (Tempo Real)</th>
+                  <th className="py-3.5 px-4">Segurança & Status</th>
                   <th className="py-3.5 px-4 text-right">Ações de Controle</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filteredStores.map((store) => (
-                  <tr key={store.id} className="hover:bg-white/2 transition-colors">
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-amber-400">
-                          {store.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white text-sm">
-                            {store.name}
+                {filteredStores.map((store) => {
+                  const isBlocked = isStoreBlocked(store.id);
+                  const isPassVisible = !!visiblePasswords[store.id];
+                  const currentPin = store.adminPin || '4321';
+                  const custUrl = getStoreCustomerUrl(store.slug);
+                  const admUrl = getStoreAdminUrl(store.slug);
+
+                  return (
+                    <tr key={store.id} className="hover:bg-white/2 transition-colors">
+                      {/* Loja & Links Próprios */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-bold text-amber-400 shrink-0">
+                            {store.name.charAt(0)}
                           </div>
-                          <div className="text-[11px] font-mono text-[#7D756D]">
-                            ID: {store.id} (/{store.slug})
+                          <div className="space-y-1.5">
+                            <div className="font-bold text-white text-sm">
+                              {store.name}
+                            </div>
+                            <div className="text-[10px] font-mono text-[#7D756D]">
+                              ID: {store.id} • Slug: /{store.slug}
+                            </div>
+
+                            {/* Botões de Cópia dos Links Próprios */}
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(custUrl, 'store', store.id)}
+                                className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[10px] text-[#D9D0C5] border border-white/10 flex items-center gap-1 cursor-pointer transition-all"
+                                title={custUrl}
+                              >
+                                {copiedStoreLinkId === store.id ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-3 h-3 text-amber-400" />
+                                )}
+                                <span>{copiedStoreLinkId === store.id ? 'Copiado!' : 'Link Cliente'}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(admUrl, 'admin', store.id)}
+                                className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[10px] text-[#D9D0C5] border border-white/10 flex items-center gap-1 cursor-pointer transition-all"
+                                title={admUrl}
+                              >
+                                {copiedAdminLinkId === store.id ? (
+                                  <Check className="w-3 h-3 text-emerald-400" />
+                                ) : (
+                                  <Lock className="w-3 h-3 text-[#D8A47F]" />
+                                )}
+                                <span>{copiedAdminLinkId === store.id ? 'Copiado!' : 'Link Lojista'}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-4 px-4 text-[#D9D0C5]">
-                      <div className="font-medium text-white">{store.ownerName}</div>
-                      <div className="text-[11px] text-[#7D756D]">{store.ownerEmail}</div>
-                    </td>
+                      {/* Lojista Responsável */}
+                      <td className="py-4 px-4 text-[#D9D0C5]">
+                        <div className="font-medium text-white">{store.ownerName}</div>
+                        <div className="text-[11px] text-[#A69C94]">{store.whatsapp}</div>
+                        <div className="text-[10px] text-[#7D756D]">{store.ownerEmail}</div>
+                      </td>
 
-                    <td className="py-4 px-4">
-                      <div className="text-[#D9D0C5]">{store.whatsapp}</div>
-                      <div className="text-[11px] text-amber-300/80 font-mono">
-                        PIN: {store.adminPin || '4321'}
-                      </div>
-                    </td>
+                      {/* Senha / PIN Sincronizado */}
+                      <td className="py-4 px-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-bold text-amber-300 bg-black/40 px-2.5 py-1 rounded-lg border border-amber-500/30">
+                              {isPassVisible ? currentPin : '••••••'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility(store.id)}
+                              className="p-1 text-[#A69C94] hover:text-white transition-colors cursor-pointer"
+                              title={isPassVisible ? 'Ocultar Senha' : 'Ver Senha'}
+                            >
+                              {isPassVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResettingStore(store);
+                              setNewResetPassword('');
+                            }}
+                            className="text-[10px] text-amber-400/90 hover:text-amber-300 underline font-medium cursor-pointer"
+                          >
+                            Redefinir Senha
+                          </button>
+                        </div>
+                      </td>
 
-                    <td className="py-4 px-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white border border-white/20">
-                        {store.plan}
-                      </span>
-                    </td>
+                      {/* Status & Bloqueio por Tentativas */}
+                      <td className="py-4 px-4">
+                        <div className="space-y-1.5">
+                          {isBlocked ? (
+                            <div className="space-y-1">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-red-500/20 text-red-300 border border-red-500/40 animate-pulse">
+                                <AlertTriangle className="w-3 h-3" />
+                                <span>Bloqueada (4 Erros)</span>
+                              </span>
+                              <div>
+                                <button
+                                  type="button"
+                                  onClick={() => unblockStore(store.id)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                                >
+                                  <Unlock className="w-3 h-3" />
+                                  <span>Desbloquear Acesso</span>
+                                </button>
+                              </div>
+                            </div>
+                          ) : store.status === 'active' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>Ativa</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                              <XCircle className="w-3 h-3" />
+                              <span>Suspensa</span>
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-                    <td className="py-4 px-4">
-                      {store.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle className="w-3 h-3" />
-                          <span>Ativa</span>
-                        </span>
-                      ) : store.status === 'paused' ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          <AlertTriangle className="w-3 h-3" />
-                          <span>Pausada</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                          <XCircle className="w-3 h-3" />
-                          <span>Suspensa</span>
-                        </span>
-                      )}
-                    </td>
+                      {/* Ações */}
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Toggle active / suspended */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateStoreStatus(
+                                store.id,
+                                store.status === 'active' ? 'suspended' : 'active'
+                              )
+                            }
+                            title={store.status === 'active' ? 'Suspender Loja' : 'Ativar Loja'}
+                            className={`p-2 rounded-lg border transition-all cursor-pointer ${
+                              store.status === 'active'
+                                ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20'
+                                : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
+                            }`}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                          </button>
 
-                    <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Toggle active / paused status */}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateStoreStatus(
-                              store.id,
-                              store.status === 'active' ? 'suspended' : 'active'
-                            )
-                          }
-                          title={store.status === 'active' ? 'Suspender Loja' : 'Ativar Loja'}
-                          className={`p-2 rounded-lg border transition-all cursor-pointer ${
-                            store.status === 'active'
-                              ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20'
-                              : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20'
-                          }`}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                        </button>
+                          {/* Entrar como Lojista da loja */}
+                          <button
+                            type="button"
+                            onClick={() => handleAccessStoreAsMerchant(store.id)}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center gap-1 cursor-pointer transition-all border border-white/15"
+                            title="Acessar painel restrito desta loja"
+                          >
+                            <StoreIcon className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Painel Lojista</span>
+                          </button>
 
-                        {/* Entrar como Lojista da loja */}
-                        <button
-                          type="button"
-                          onClick={() => handleAccessStoreAsMerchant(store.id)}
-                          className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center gap-1 cursor-pointer transition-all border border-white/15"
-                          title="Acessar painel restrito desta loja"
-                        >
-                          <StoreIcon className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Painel Lojista</span>
-                        </button>
-
-                        {/* Ver rota pública da loja */}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenStorePublic(store.id)}
-                          className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#A69C94] hover:text-white border border-white/10 transition-all cursor-pointer"
-                          title="Ver Catálogo Público desta Loja"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {/* Ver rota pública da loja */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenStorePublic(store.id)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#A69C94] hover:text-white border border-white/10 transition-all cursor-pointer"
+                            title="Ver Catálogo Público desta Loja"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       </main>
+
+      {/* Modal: Redefinir Senha do Lojista pelo Dono */}
+      {resettingStore && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-fadeIn">
+          <div className="bg-[#282523] border border-white/15 w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <h3 className="font-['Playfair_Display',serif] text-base font-bold text-white">
+                  Redefinir Senha • {resettingStore.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResettingStore(null)}
+                className="text-[#7D756D] hover:text-white p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#A69C94]">
+              Defina uma nova senha para a proprietária <strong>{resettingStore.ownerName}</strong>. A alteração entrará em vigor imediatamente.
+            </p>
+
+            <form onSubmit={handleConfirmResetPassword} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-[#D9D0C5] mb-1">
+                  Nova Senha / PIN
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newResetPassword}
+                  onChange={(e) => setNewResetPassword(e.target.value)}
+                  placeholder="Ex: 5678"
+                  className="w-full bg-[#1F1D1B] border border-white/15 rounded-xl py-2.5 px-3 text-white placeholder-[#7D756D] focus:outline-none focus:border-amber-400 font-mono text-center text-lg font-bold"
+                />
+              </div>
+
+              {resetSuccessMessage && (
+                <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs text-center flex items-center justify-center gap-1.5">
+                  <Check className="w-4 h-4" />
+                  <span>{resetSuccessMessage}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResettingStore(null)}
+                  className="px-4 py-2 rounded-xl border border-white/15 text-[#D9D0C5] hover:bg-white/5 font-semibold transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Salvar Nova Senha
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Cadastrar Novo Lojista */}
       {isCreateStoreModalOpen && (

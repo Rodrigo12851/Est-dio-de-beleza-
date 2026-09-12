@@ -9,7 +9,8 @@ import { OrderNotificationBanner } from './components/store/OrderNotificationBan
 import { PwaInstallBanner } from './components/store/PwaInstallBanner';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { SuperAdminDashboard } from './components/superadmin/SuperAdminDashboard';
-import { Lock, Store, Shield, ArrowLeft } from 'lucide-react';
+import { Lock, Store, Shield, ArrowLeft, MessageCircle, AlertTriangle } from 'lucide-react';
+import { getWhatsAppSupportLink } from './utils/storeRouting';
 
 const MainAppContent: React.FC = () => {
   const {
@@ -19,6 +20,8 @@ const MainAppContent: React.FC = () => {
     isSuperAdminAuthenticated,
     currentStore,
     currentStoreId,
+    isStoreBlocked,
+    supportWhatsapp,
   } = useStore();
 
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
@@ -36,6 +39,14 @@ const MainAppContent: React.FC = () => {
     setAdminLoginInitialType(type);
     setIsAdminLoginOpen(true);
   };
+
+  const isCurrentStoreBlocked = isStoreBlocked(currentStoreId);
+  const supportLink = getWhatsAppSupportLink(
+    supportWhatsapp,
+    currentStore?.name || 'Minha Loja',
+    currentStoreId,
+    'blocked_password'
+  );
 
   return (
     <>
@@ -96,41 +107,85 @@ const MainAppContent: React.FC = () => {
         ) : (
           <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col items-center justify-center p-4">
             <div className="max-w-md w-full bg-[#161616] border border-[#2A2A2A] rounded-3xl p-8 shadow-xl text-center space-y-5">
-              <div className="w-16 h-16 rounded-2xl bg-[#1F1F1F] border border-[#C75C5C]/40 flex items-center justify-center mx-auto text-[#C75C5C]">
-                <Store className="w-8 h-8" />
+              <div
+                className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto border ${
+                  isCurrentStoreBlocked
+                    ? 'bg-red-500/20 text-red-400 border-red-500/40 animate-pulse'
+                    : 'bg-[#1F1F1F] border-[#9B4B5A]/40 text-[#D8A47F]'
+                }`}
+              >
+                {isCurrentStoreBlocked ? <AlertTriangle className="w-8 h-8" /> : <Store className="w-8 h-8" />}
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C75C5C] bg-[#1F1F1F] border border-[#C75C5C]/30 px-2.5 py-0.5 rounded-full">
-                  Área 2 • Lojista
+                <span
+                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                    isCurrentStoreBlocked
+                      ? 'bg-red-950/60 text-red-300 border-red-500/40'
+                      : 'bg-[#1F1F1F] text-[#D8A47F] border-[#9B4B5A]/30'
+                  }`}
+                >
+                  {isCurrentStoreBlocked ? 'Segurança • Acesso Bloqueado' : 'Painel Administrativo do Lojista'}
                 </span>
                 <h2 className="text-xl font-bold font-['Playfair_Display',serif] text-[#F8F5F2]">
-                  Painel da Boutique ({currentStore?.name || 'Loja Ativa'})
+                  {currentStore?.name || 'Boutique'}
                 </h2>
                 <p className="text-xs text-[#A0A0A0]">
-                  Acesso restrito ao proprietário da loja (ID: <strong className="font-mono text-[#D8A47F]">{currentStoreId}</strong>). Ele enxerga somente os dados da própria loja.
+                  {isCurrentStoreBlocked
+                    ? 'Esta boutique foi bloqueada por tentativas excessivas de senha incorreta.'
+                    : `Área exclusiva para gerenciar pedidos, catálogo de peças e fotos da sua boutique.`}
                 </p>
               </div>
 
-              <div className="pt-2 space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenLogin('merchant')}
-                  className="w-full py-3 bg-[#C75C5C] hover:bg-[#B34E4E] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Digitar PIN da Loja</span>
-                </button>
+              {isCurrentStoreBlocked ? (
+                <div className="pt-2 space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-red-950/40 border border-red-500/30 text-left text-xs text-red-200 space-y-1">
+                    <p className="font-semibold">⚠️ Limite de 4 tentativas atingido</p>
+                    <p className="text-[11px] text-red-300/80 leading-relaxed">
+                      Entre em contato com o suporte e proprietário do Intima Lab via WhatsApp para solicitar o desbloqueio com segurança.
+                    </p>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => setAppRoute('store')}
-                  className="w-full py-2.5 text-xs text-[#A0A0A0] hover:text-[#F8F5F2] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Voltar para o Catálogo do Cliente</span>
-                </button>
-              </div>
+                  <a
+                    href={supportLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Falar com o Suporte no WhatsApp</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setAppRoute('store')}
+                    className="w-full py-2.5 text-xs text-[#A0A0A0] hover:text-[#F8F5F2] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Voltar para o Catálogo da Loja</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-2 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenLogin('merchant')}
+                    className="w-full py-3 bg-[#9B4B5A] hover:bg-[#843A48] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>Digitar Senha de Acesso</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAppRoute('store')}
+                    className="w-full py-2.5 text-xs text-[#A0A0A0] hover:text-[#F8F5F2] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Voltar para o Catálogo do Cliente</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -138,7 +193,7 @@ const MainAppContent: React.FC = () => {
 
       {/* ROTA 1: ROTA PÚBLICA DO CLIENTE (Public E-Commerce & Catálogo de Novidades) */}
       {appRoute === 'store' && (
-        <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col font-sans selection:bg-[#C75C5C] selection:text-white">
+        <div className="min-h-screen bg-[#121212] text-[#F8F5F2] flex flex-col font-sans selection:bg-[#9B4B5A] selection:text-white">
           {/* Top Navbar */}
           <StoreNavbar onOpenAdminLogin={() => handleOpenLogin('merchant')} />
 
@@ -165,6 +220,7 @@ const MainAppContent: React.FC = () => {
       {/* 2-Tier Admin Login Modal (Merchant vs Super Admin) */}
       <AdminLoginModal
         isOpen={isAdminLoginOpen}
+        initialType={adminLoginInitialType}
         onClose={() => setIsAdminLoginOpen(false)}
         onSuccess={() => {
           // Handled within modal by calling setAppRoute

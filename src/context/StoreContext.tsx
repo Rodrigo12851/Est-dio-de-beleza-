@@ -37,9 +37,22 @@ import {
   initialOrders,
 } from '../data/initialData';
 import { notificationSound } from '../utils/audioNotification';
+import {
+  parseInitialUrlRoute,
+  syncUrlWithAppState,
+  DEFAULT_SUPPORT_WHATSAPP,
+} from '../utils/storeRouting';
 
 export type AdminTab = 'dashboard' | 'orders' | 'products' | 'categories' | 'settings';
 export type SuperAdminTab = 'stores' | 'metrics' | 'audit' | 'settings';
+
+export const MAX_LOGIN_ATTEMPTS = 4;
+
+export interface MerchantLoginResult {
+  success: boolean;
+  blocked: boolean;
+  remaining: number;
+}
 
 interface StoreContextType {
   // 3-Tier Routing
@@ -106,15 +119,28 @@ interface StoreContextType {
   adminTab: AdminTab;
   setAdminTab: (tab: AdminTab) => void;
   isMerchantAuthenticated: boolean;
-  merchantLogin: (pin: string, storeId?: string) => boolean;
+  merchantLogin: (pin: string, storeId?: string) => MerchantLoginResult;
   merchantLogout: () => void;
+  changeStorePassword: (
+    currentPin: string,
+    newPin: string,
+    storeId?: string
+  ) => Promise<{ success: boolean; message: string }>;
 
-  // Super Admin
+  // Super Admin & Governance
   superAdminTab: SuperAdminTab;
   setSuperAdminTab: (tab: SuperAdminTab) => void;
   isSuperAdminAuthenticated: boolean;
   superAdminLogin: (pin: string) => boolean;
   superAdminLogout: () => void;
+  adminResetStorePassword: (storeId: string, newPin: string) => Promise<void>;
+
+  // Security & Brute-force block controls
+  isStoreBlocked: (storeId: string) => boolean;
+  getRemainingAttempts: (storeId: string) => number;
+  unblockStore: (storeId: string) => Promise<void>;
+  supportWhatsapp: string;
+  setSupportWhatsapp: (phone: string) => void;
 
   // Legacy compatibility mappings
   viewMode: 'store' | 'admin';
@@ -151,6 +177,8 @@ const LOCAL_STORAGE_KEYS = {
   CONFIG: 'bella_store_config',
   MERCHANT_AUTH: 'bella_merchant_auth',
   SUPER_ADMIN_AUTH: 'bella_super_admin_auth',
+  FAILED_ATTEMPTS: 'intimalab_failed_attempts',
+  SUPPORT_WHATSAPP: 'intimalab_support_whatsapp',
 };
 
 export const SUPER_ADMIN_PIN = '9999';
@@ -176,6 +204,56 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.CURRENT_STORE_ID);
     return saved || DEFAULT_STORE_ID;
   });
+
+  // Security: Failed Login Attempts per Store (Brute Force Protection)
+  const [failedAttempts, setFailedAttempts] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEYS.FAILED_ATTEMPTS);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Support WhatsApp for App Owner / Intima Lab Central
+  const [supportWhatsapp, setSupportWhatsappState] = useState<string>(() => {
+    return localStorage.getItem(LOCAL_STORAGE_KEYS.SUPPORT_WHATSAPP) || DEFAULT_SUPPORT_WHATSAPP;
+  });
+
+  const setSupportWhatsapp = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    setSupportWhatsappState(clean);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.SUPPORT_WHATSAPP, clean);
+  };
+
+  // URL Routing detection on startup
+  useEffect(() => {
+    const initialUrl = parseInitialUrlRoute();
+    if (initialUrl.route === 'superadmin') {
+      setAppRouteState('superadmin');
+      localStorage.setItem(LOCAL_STORAGE_KEYS.APP_ROUTE, 'superadmin');
+    } else if (initialUrl.route === 'merchant') {
+      setAppRouteState('merchant');
+      localStorage.setItem(LOCAL_STORAGE_KEYS.APP_ROUTE, 'merchant');
+      if (initialUrl.storeSlug) {
+        const found = allStores.find(
+          (s) => s.slug === initialUrl.storeSlug || s.id === initialUrl.storeSlug
+        );
+        if (found) {
+          selectStore(found.id);
+        }
+      }
+    } else if (initialUrl.route === 'store' && initialUrl.storeSlug) {
+      const found = allStores.find(
+        (s) => s.slug === initialUrl.storeSlug || s.id === initialUrl.storeSlug
+      );
+      if (found) {
+        selectStore(found.id);
+        setAppRouteState('store');
+        localStorage.setItem(LOCAL_STORAGE_KEYS.APP_ROUTE, 'store');
+      }
+    }
+  }, [allStores]);
 
   // User Theme / Palette state (Dark Allure, Boutique Rosé & Nude de antes, Champanhe, Sensual Rouge)
   const [palette, setPaletteState] = useState<StorePalette>(() => {
@@ -425,20 +503,178 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [cart]
   );
 
-  // Merchant PIN Auth
-  const merchantLogin = (pin: string, storeId?: string) => {
-    const targetStore = storeId ? allStores.find((s) => s.id === storeId) : currentStore;
+  // URL Sync whenever route or currentStore changes
+  useEffect(() => {
+    syncUrlWithAppState(appRoute, currentStore?.slug || currentStore?.id);
+  }, [appRoute, currentStore?.slug, currentStore?.id]);
+
+  // Security: Brute Force & Block Controls
+  const isStoreBlocked = (storeId: string): boolean => {
+    const attempts = failedAttempts[storeId] || 0;
+    const store = allStores.find((s) => s.id === storeId);
+    return attempts >= MAX_LOGIN_ATTEMPTS || store?.isBlocked === true || store?.status === 'blocked';
+  };
+
+  const getRemainingAttempts = (storeId: string): number => {
+    const attempts = failedAttempts[storeId] || 0;
+    return Math.max(0, MAX_LOGIN_ATTEMPTS - attempts);
+  };
+
+  const unblockStore = async (storeId: string) => {
+    const updated = { ...failedAttempts, [storeId]: 0 };
+    setFailedAttempts(updated);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.FAILED_ATTEMPTS, JSON.stringify(updated));
+
+    const store = allStores.find((s) => s.id === storeId);
+    if (store && (store.isBlocked || store.status === 'blocked')) {
+      const unblockedStore: Store = {
+        ...store,
+        isBlocked: false,
+        failedLoginAttempts: 0,
+        status: store.status === 'blocked' ? 'active' : store.status,
+      };
+      await saveStoreToDb(unblockedStore);
+      setAllStores((prev) => prev.map((s) => (s.id === storeId ? unblockedStore : s)));
+    }
+  };
+
+  // Merchant PIN / Password Auth with Lockout Protection
+  const merchantLogin = (pin: string, storeId?: string): MerchantLoginResult => {
+    const targetStoreId = storeId || currentStoreId;
+    const targetStore = allStores.find((s) => s.id === targetStoreId) || currentStore;
     const storePin = targetStore?.adminPin || config.adminPin || '4321';
 
-    if (pin.trim() === storePin.trim() || pin === '1234' || pin === '4321') {
+    // Check if store is already locked
+    if (isStoreBlocked(targetStoreId)) {
+      return { success: false, blocked: true, remaining: 0 };
+    }
+
+    // Success check
+    if (pin.trim() === storePin.trim()) {
+      unblockStore(targetStoreId);
       if (storeId) {
         selectStore(storeId);
       }
       setIsMerchantAuthenticated(true);
       localStorage.setItem(LOCAL_STORAGE_KEYS.MERCHANT_AUTH, 'true');
-      return true;
+      return { success: true, blocked: false, remaining: MAX_LOGIN_ATTEMPTS };
     }
-    return false;
+
+    // Failure: increment attempt count
+    const currentAttempts = (failedAttempts[targetStoreId] || 0) + 1;
+    const updatedAttempts = { ...failedAttempts, [targetStoreId]: currentAttempts };
+    setFailedAttempts(updatedAttempts);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.FAILED_ATTEMPTS, JSON.stringify(updatedAttempts));
+
+    const isNowBlocked = currentAttempts >= MAX_LOGIN_ATTEMPTS;
+    const remaining = Math.max(0, MAX_LOGIN_ATTEMPTS - currentAttempts);
+
+    if (isNowBlocked) {
+      const blockedStore: Store = {
+        ...targetStore,
+        isBlocked: true,
+        failedLoginAttempts: currentAttempts,
+      };
+      saveStoreToDb(blockedStore);
+      setAllStores((prev) => prev.map((s) => (s.id === targetStoreId ? blockedStore : s)));
+    }
+
+    return {
+      success: false,
+      blocked: isNowBlocked,
+      remaining,
+    };
+  };
+
+  // Change Password Flow: Requires Previous Password ("senha de antes") + Confirmation
+  // Synchronizes immediately with App Owner (Super Admin)
+  const changeStorePassword = async (
+    currentPin: string,
+    newPin: string,
+    storeId?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const targetStoreId = storeId || currentStoreId;
+    const targetStore = allStores.find((s) => s.id === targetStoreId) || currentStore;
+    const expectedCurrentPin = targetStore?.adminPin || config.adminPin || '4321';
+
+    if (currentPin.trim() !== expectedCurrentPin.trim()) {
+      return {
+        success: false,
+        message: 'A senha atual informada está incorreta.',
+      };
+    }
+
+    const cleanNewPin = newPin.trim();
+    if (cleanNewPin.length < 4) {
+      return {
+        success: false,
+        message: 'A nova senha deve possuir pelo menos 4 caracteres.',
+      };
+    }
+
+    // 1. Atualizar config da loja ativa
+    if (targetStoreId === currentStoreId) {
+      const updatedConfig = { ...config, adminPin: cleanNewPin, isBlocked: false };
+      setConfig(updatedConfig);
+      await saveStoreConfigToDb(updatedConfig, currentStoreId);
+    }
+
+    // 2. Atualizar o objeto Store central no banco e no estado multi-tenancy
+    // Isso garante que no painel do Dono do App (Super Admin) a nova senha seja refletida instantaneamente!
+    const updatedStore: Store = {
+      ...targetStore,
+      adminPin: cleanNewPin,
+      isBlocked: false,
+      failedLoginAttempts: 0,
+      status: targetStore.status === 'blocked' ? 'active' : targetStore.status,
+      config: {
+        ...(targetStore.config || {}),
+        adminPin: cleanNewPin,
+        isBlocked: false,
+      },
+    };
+
+    await saveStoreToDb(updatedStore);
+    setAllStores((prev) => prev.map((s) => (s.id === targetStoreId ? updatedStore : s)));
+
+    // 3. Desbloquear tentativas
+    await unblockStore(targetStoreId);
+
+    return {
+      success: true,
+      message: 'Senha alterada com sucesso! Atualizada também na central do Intima Lab.',
+    };
+  };
+
+  // Super Admin can reset password of any store
+  const adminResetStorePassword = async (storeId: string, newPin: string) => {
+    const targetStore = allStores.find((s) => s.id === storeId);
+    if (!targetStore) return;
+
+    const cleanNewPin = newPin.trim();
+    const updatedStore: Store = {
+      ...targetStore,
+      adminPin: cleanNewPin,
+      isBlocked: false,
+      failedLoginAttempts: 0,
+      status: targetStore.status === 'blocked' ? 'active' : targetStore.status,
+      config: {
+        ...(targetStore.config || {}),
+        adminPin: cleanNewPin,
+        isBlocked: false,
+      },
+    };
+
+    await saveStoreToDb(updatedStore);
+    setAllStores((prev) => prev.map((s) => (s.id === storeId ? updatedStore : s)));
+
+    if (storeId === currentStoreId) {
+      const updatedConfig = { ...config, adminPin: cleanNewPin, isBlocked: false };
+      setConfig(updatedConfig);
+      await saveStoreConfigToDb(updatedConfig, storeId);
+    }
+
+    await unblockStore(storeId);
   };
 
   const merchantLogout = () => {
@@ -469,7 +705,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAppRoute(mode === 'admin' ? 'merchant' : 'store');
   };
   const isAdminAuthenticated = isMerchantAuthenticated;
-  const adminLogin = (pin: string) => merchantLogin(pin);
+  const adminLogin = (pin: string) => {
+    const res = merchantLogin(pin);
+    return res.success;
+  };
   const adminLogout = () => merchantLogout();
 
   // Multi-Store Management actions
@@ -689,6 +928,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const merged = { ...config, ...newConfig };
     setConfig(merged);
     await saveStoreConfigToDb(merged, currentStoreId);
+
+    // Se a senha foi atualizada no config, sincroniza imediatamente no Store central
+    // para que o Dono do App (Super Admin) veja a nova senha instantaneamente!
+    if (newConfig.adminPin) {
+      const existing = allStores.find((s) => s.id === currentStoreId);
+      if (existing) {
+        const updatedStore: Store = {
+          ...existing,
+          adminPin: newConfig.adminPin,
+          config: merged,
+        };
+        await saveStoreToDb(updatedStore);
+        setAllStores((prev) => prev.map((s) => (s.id === currentStoreId ? updatedStore : s)));
+      }
+    }
   };
 
   const resetToDefaults = async () => {
@@ -741,6 +995,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isMerchantAuthenticated,
         merchantLogin,
         merchantLogout,
+        changeStorePassword,
+        adminResetStorePassword,
+        isStoreBlocked,
+        getRemainingAttempts,
+        unblockStore,
+        supportWhatsapp,
+        setSupportWhatsapp,
         superAdminTab,
         setSuperAdminTab,
         isSuperAdminAuthenticated,

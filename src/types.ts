@@ -115,6 +115,8 @@ export interface StoreConfig {
   adminPin: string;
   logo?: string;
   bannerImage?: string;
+  isBlocked?: boolean;
+  failedLoginAttempts?: number;
 }
 
 export interface Store {
@@ -126,10 +128,12 @@ export interface Store {
   phone: string;
   whatsapp: string;
   adminPin: string;
-  status: 'active' | 'suspended' | 'trial';
+  status: 'active' | 'suspended' | 'trial' | 'blocked';
   plan: 'standard' | 'pro' | 'enterprise';
   createdAt: string;
   config: StoreConfig;
+  failedLoginAttempts?: number;
+  isBlocked?: boolean;
 }
 
 export interface PlatformMetrics {

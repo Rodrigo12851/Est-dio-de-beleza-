@@ -1,6 +1,6 @@
 {
-  "name": "Allure Intimidades - Moda Íntima & Boutique Dark",
-  "description": "E-commerce e PWA Allure Intimidades com catálogo inteligente por tamanho e cor, catálogo de novidades com expiração automática, IA de color matching e checkout desativado para consulta.",
+  "name": "Intima Lab",
+  "description": "Plataforma multi-lojas Intima Lab com links exclusivos por loja, catálogo inteligente de moda íntima, controle de segurança de senha e governança para lojistas e dono do app.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
