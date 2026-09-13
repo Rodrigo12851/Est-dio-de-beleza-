@@ -82,6 +82,13 @@ O sistema opera com **isolamento estrito de rotas** por parâmetros de URL:
 
 ## 6. Histórico de Alterações Recentes
 
+### [13/09/2026 - v5] - Reorganização Visual do Header Mobile (Linha Verde, Linha Azul e Remoção de 3 Pontinhos)
+- **Atendimento estrito ao layout indicado pelo usuário**:
+  - **Remoção do Botão 3 Pontinhos (`⋮`) no Mobile (Destaque em Vermelho)**: O botão de menu `MoreVertical` com dropdown flutuante foi completamente removido da visualização em smartphones, despoluindo o cabeçalho e liberando espaço horizontal.
+  - **Lupa de Pesquisa na Linha Azul**: A barra de busca com o ícone da lupa (`Search`) foi posicionada como uma linha dedicada e integrada imediatamente abaixo dos botões do cabeçalho no mobile, exatamente onde o usuário desenhou a linha azul. O campo fica sempre visível e acessível para busca direta sem precisar de toques adicionais.
+  - **Nome da Loja na Linha Verde**: O nome da boutique ativa (`config.name`) foi posicionado com destaque e elegância na barra superior do topo (área da linha verde desenhada pelo usuário), com tipografia Playfair Display e brilho sutil, garantindo 100% de visibilidade sem qualquer truncamento ou corte (`A...`), e com o link de Atendimento WhatsApp ao lado.
+  - **Harmonia do Cabeçalho Mobile**: O cabeçalho agora possui três faixas perfeitas (Topo com Nome da Loja, Centro com Menu/Logo e Ações [Paleta, Rastreamento, Sacola], e Base com a Barra de Busca), garantindo que absolutamente nada fique escondido em qualquer tamanho de celular.
+
 ### [12/09/2026 - v4] - Otimização da Barra Superior no Mobile (Apenas Ícones Compactos)
 - **Barra de Ações no Mobile**:
   - Removidos os textos explicativos ("Allure Dark / Paleta Rosé", "Meus Pedidos" e "Sacola") na visualização mobile em telas de smartphone.

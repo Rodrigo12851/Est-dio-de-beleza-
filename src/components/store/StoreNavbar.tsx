@@ -9,7 +9,6 @@ import {
   Instagram,
   MapPin,
   Menu,
-  MoreVertical,
   Palette,
   PackageCheck,
 } from 'lucide-react';
@@ -39,9 +38,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
     setFilterNovidadesOnly,
   } = useStore();
 
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
   const isLight = palette === 'light-rose';
@@ -53,18 +50,19 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
           ? 'bg-[#FAF7F5]/95 backdrop-blur-md border-[#E8E1DA] text-[#2D2926]'
           : 'bg-[#121212]/95 backdrop-blur-md border-[#2A2A2A] text-[#F8F5F2]'
       }`}>
-        {/* Top Announcement Bar (100% voltado para a cliente da loja) */}
-        <div className={`text-[11px] font-medium py-1.5 px-4 border-b ${
+        {/* Top Announcement Bar / Linha Verde com Nome da Loja em destaque */}
+        <div className={`text-[11px] font-medium py-1.5 px-3 sm:px-4 border-b ${
           isLight
             ? 'bg-[#F7F2ED] text-[#444444] border-[#E8E1DA]'
             : 'bg-[#1F1F1F] text-[#F8F5F2] border-[#2A2A2A]'
         }`}>
-          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 truncate">
-              <span className={`inline-flex items-center gap-1 font-bold ${
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
+            {/* Nome da Loja em destaque no topo (Linha Verde solicitada) */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="w-3.5 h-3.5 text-[#C75C5C] shrink-0" />
+              <span className={`font-['Playfair_Display',serif] font-bold text-xs sm:text-sm tracking-tight truncate ${
                 isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
               }`}>
-                <Sparkles className="w-3 h-3" />
                 {config.name || 'Allure Intimidades'}
               </span>
               {config.announcementBar && (
@@ -80,17 +78,18 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
             </div>
 
             {/* Atendimento Direto da Loja para a Cliente */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
               <a
                 href={`https://wa.me/${(config.whatsapp || config.phone || '').replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center gap-1.5 text-[11px] font-semibold hover:underline cursor-pointer ${
+                className={`flex items-center gap-1 text-[11px] font-semibold hover:underline cursor-pointer ${
                   isLight ? 'text-[#9B4B5A] hover:text-[#843A48]' : 'text-[#D8A47F] hover:text-[#FAF8F5]'
                 }`}
               >
-                <Phone className="w-3 h-3 text-emerald-500" />
-                <span>Atendimento WhatsApp</span>
+                <Phone className="w-3 h-3 text-emerald-500 shrink-0" />
+                <span className="hidden xs:inline sm:inline">Atendimento</span>
+                <span>WhatsApp</span>
               </a>
 
               {config.instagram && (
@@ -111,13 +110,13 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
         </div>
 
       {/* Main Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-6">
           {/* Mobile Menu Toggle */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`p-2 -ml-2 sm:hidden cursor-pointer ${
+            className={`p-1.5 sm:p-2 -ml-1 sm:-ml-2 sm:hidden cursor-pointer shrink-0 ${
               isLight ? 'text-[#2D2926] hover:text-[#9B4B5A]' : 'text-[#E0E0E0] hover:text-[#D8A47F]'
             }`}
             aria-label="Abrir menu"
@@ -126,7 +125,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
           </button>
 
           {/* Brand Logo & Name */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
             <button
               type="button"
               onClick={() => {
@@ -161,7 +160,7 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 }`}>
                   {config.name}
                 </h1>
-                <p className={`text-[9px] sm:text-xs font-bold tracking-widest uppercase mt-0.5 truncate hidden xs:block sm:block ${
+                <p className={`text-[9px] sm:text-xs font-bold tracking-widest uppercase mt-0.5 truncate hidden sm:block ${
                   isLight ? 'text-[#9B4B5A]' : 'text-[#D8A47F]'
                 }`}>
                   {config.tagline || 'Elegância • Conforto • Autoestima'}
@@ -197,20 +196,8 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
             </div>
           </div>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Mobile Search Icon Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={`p-2 md:hidden cursor-pointer ${
-                isLight ? 'text-[#2D2926] hover:text-[#9B4B5A]' : 'text-[#E0E0E0] hover:text-[#D8A47F]'
-              }`}
-              aria-label="Buscar produtos"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-
+          {/* Right Action Icons (sem botão 3 pontinhos e sem ícone de lupa solto no mobile) */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Palette Switcher Button */}
             <button
               type="button"
@@ -263,163 +250,36 @@ export const StoreNavbar: React.FC<StoreNavbarProps> = ({
                 </span>
               )}
             </button>
-
-            {/* Three Dots More Options Menu - Popover Direto sem Bug */}
-            <div className="relative sm:hidden">
-              <button
-                type="button"
-                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`p-2 rounded-full transition-colors cursor-pointer ${
-                  isLight
-                    ? 'text-[#2D2926] hover:bg-[#F0EBE6]'
-                    : 'text-[#E0E0E0] hover:text-[#D8A47F] hover:bg-[#1F1F1F]'
-                }`}
-                title="Mais opções e configurações"
-                aria-label="Mais opções"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </button>
-
-              {/* Dropdown Menu Flutuante */}
-              {isMoreMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-50 bg-black/40"
-                    onClick={() => setIsMoreMenuOpen(false)}
-                    aria-hidden="true"
-                  />
-                  <div
-                    className={`absolute right-0 top-full mt-2 w-56 rounded-2xl shadow-2xl border p-2 z-50 transition-all ${
-                      isLight
-                        ? 'bg-white border-[#E8E1DA] text-[#2D2926]'
-                        : 'bg-[#1C1C1C] border-[#2A2A2A] text-[#F8F5F2]'
-                    }`}
-                  >
-                    <div className="px-3 py-2 border-b border-inherit mb-1">
-                      <p className="text-[10px] uppercase font-bold tracking-wider text-[#9B4B5A]">
-                        Configurações Rápidas
-                      </p>
-                    </div>
-
-                    {/* Alternar Paleta de Cores (Paleta de antes vs Dark) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPalette(palette === 'dark-allure' ? 'light-rose' : 'dark-allure');
-                        setIsMoreMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Palette className="w-4 h-4 text-[#C75C5C]" />
-                        <span>{isLight ? 'Mudar p/ Allure Dark' : 'Voltar p/ Paleta Rosé'}</span>
-                      </div>
-                    </button>
-
-                    {/* Ver Novidades */}
-                    {newArrivals.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFilterNovidadesOnly(true);
-                          setSelectedCategory(null);
-                          setIsMoreMenuOpen(false);
-                          const el = document.getElementById('catalog-section');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
-                          isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-[#D8A47F]" />
-                          <span>Ver Novidades ({newArrivals.length})</span>
-                        </div>
-                      </button>
-                    )}
-
-                    {/* Meus Pedidos no Celular */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMoreMenuOpen(false);
-                        setIsTrackingOpen(true);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
-                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
-                      }`}
-                    >
-                      <PackageCheck className="w-4 h-4 text-[#C75C5C]" />
-                      <span>Meus Pedidos & Rastreio</span>
-                    </button>
-
-                    {/* Ver Menu Completo / Categorias */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMoreMenuOpen(false);
-                        setIsMobileMenuOpen(true);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
-                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
-                      }`}
-                    >
-                      <Menu className="w-4 h-4 text-[#A0A0A0]" />
-                      <span>Todas as Categorias</span>
-                    </button>
-
-                    {/* WhatsApp */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMoreMenuOpen(false);
-                        window.open(`https://wa.me/${(config.whatsapp || config.phone || '').replace(/\D/g, '')}`, '_blank');
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
-                        isLight ? 'hover:bg-[#FAF7F5]' : 'hover:bg-[#252525]'
-                      }`}
-                    >
-                      <Phone className="w-4 h-4 text-emerald-500" />
-                      <span>Falar no WhatsApp</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Mobile Expanded Search Bar */}
-        {isSearchOpen && (
-          <div className="pb-3 md:hidden">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar lingeries, conjuntos, cor..."
-                className={`w-full rounded-full py-2 pl-10 pr-9 text-xs transition-all focus:outline-none focus:ring-2 ${
-                  isLight
-                    ? 'bg-white border border-[#E8E1DA] text-[#2D2926] placeholder-[#888888] focus:ring-[#9B4B5A]/20'
-                    : 'bg-[#1F1F1F] border border-[#2A2A2A] text-[#F8F5F2] placeholder-[#8A8A8A] focus:ring-[#D8A47F]/30'
-                }`}
-                autoFocus
-              />
-              <Search className="w-4 h-4 text-[#8A8A8A] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A8A] p-1"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+        {/* Lupa de Pesquisa no Mobile (Linha Azul desenhada pelo usuário) */}
+        <div className="md:hidden pb-2.5 pt-0.5">
+          <div className="relative w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por lingerie, conjunto, cor, tamanho..."
+              className={`w-full rounded-full py-2 pl-9 pr-9 text-xs transition-all focus:outline-none focus:ring-2 ${
+                isLight
+                  ? 'bg-white border border-[#E8E1DA] text-[#2D2926] placeholder-[#888888] focus:ring-[#9B4B5A]/20 focus:border-[#9B4B5A]'
+                  : 'bg-[#1F1F1F] border border-[#2A2A2A] text-[#F8F5F2] placeholder-[#8A8A8A] focus:ring-[#D8A47F]/30 focus:border-[#D8A47F]'
+              }`}
+            />
+            <Search className="w-4 h-4 text-[#8A8A8A] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8A8A8A] hover:text-[#2D2926] p-1 cursor-pointer"
+                title="Limpar busca"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Category Navigation Pills (Horizontal Scroll) */}
         <div className={`flex items-center gap-2 overflow-x-auto no-scrollbar py-2.5 border-t text-xs font-medium ${
